@@ -1,0 +1,2487 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BullakMusic-converter — by bullak</title>
+
+  <!-- Favicon SVG Personalizado: Monograma 'B' + Onda Hi-Fi en Naranja (#f97316) y Blanco -->
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230c0c10' stroke='%23f97316' stroke-width='3'/%3E%3Cpath d='M16 16h14c5.5 0 9.5 3.2 9.5 8 0 3.4-2 6-5.2 7 4 1 6.7 3.9 6.7 8 0 5.5-4.5 9-10.5 9H16V16zm8 12.5h5c2.2 0 3.8-1.3 3.8-3.3 0-2-1.6-3.2-3.8-3.2h-5v6.5zm0 13.5h5.8c2.6 0 4.3-1.4 4.3-3.7 0-2.2-1.7-3.6-4.3-3.6H24V42z' fill='%23ffffff'/%3E%3Crect x='45' y='24' width='3.5' height='16' rx='1.75' fill='%23f97316'/%3E%3Crect x='51' y='18' width='3.5' height='28' rx='1.75' fill='%23fb923c'/%3E%3C/svg%3E"
+  />
+
+  <!-- Tipografías del Sistema de Diseño: DM Sans + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            cockpit: {
+              bg: '#09090b',
+              card: '#0c0c10',
+              panel: '#121218',
+              elevated: '#181820',
+              border: '#1e1e26',
+              borderBright: '#2c2c38',
+              orange: '#f97316',
+              orangeGlow: '#fb923c',
+              blue: '#2563eb',
+              blueBright: '#3b82f6',
+              emerald: '#10b981',
+              amber: '#f59e0b',
+              crimson: '#ef4444'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --brand-color: #f97316;
+      --telemetry-blue: #3b82f6;
+      --progress-bar-radius: 9999px;
+      --progress-bar-track: #181820;
+      --progress-bar-fill: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+    }
+
+    body {
+      background-color: #09090b;
+      color: #fafafa;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      accent-color: var(--brand-color);
+      background-image:
+        radial-gradient(circle at 12% 0%, rgba(249, 115, 22, 0.08), transparent 36%),
+        radial-gradient(circle at 88% 0%, rgba(37, 99, 235, 0.08), transparent 38%),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    }
+
+    [x-cloak] {
+      display: none !important;
+    }
+
+    /* Panel biselado estilo consola automotriz OLED */
+    .cockpit-card {
+      background: linear-gradient(180deg, #111117 0%, #0c0c10 100%);
+      border: 1px solid #1e1e26;
+      box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+        0 10px 30px -10px rgba(0, 0, 0, 0.65);
+    }
+
+    .cockpit-inset {
+      background-color: #070709;
+      border: 1px solid #1a1a22;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.75);
+    }
+
+    /* Directivas modern-web-guidance: Accessibility Visually Hidden & Focus Visible */
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
+
+    :where(a:any-link, button, input, select, [role="tab"]):focus-visible {
+      outline: 2px solid #f97316;
+      outline-offset: 2px;
+    }
+
+    /* Directivas modern-web-guidance: Native <dialog> scroll containment */
+    dialog:modal {
+      overscroll-behavior: contain;
+    }
+    dialog::backdrop {
+      overflow: hidden;
+      overscroll-behavior: contain;
+      background: rgba(5, 5, 8, 0.78);
+      backdrop-filter: blur(6px);
+    }
+
+    /* Directivas modern-web-guidance: Semantic <progress> custom styling (separate vendor rules!) */
+    progress {
+      appearance: none;
+      border: 0 solid;
+      overflow: clip;
+      container-type: inline-size;
+      border-radius: var(--progress-bar-radius);
+      background: var(--progress-bar-track);
+      box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+      --progress-bar-indeterminate-size: 32%;
+      --progress-bar-indeterminate-animation-duration: 1.4s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      progress {
+        --progress-bar-indeterminate-animation-duration: 8s;
+      }
+    }
+
+    progress:indeterminate {
+      --progress-bar-animation: var(
+        --progress-bar-indeterminate-animation,
+        progress-bar-indeterminate var(--progress-bar-indeterminate-animation-duration) infinite linear
+      );
+    }
+
+    progress::-webkit-progress-bar {
+      background: transparent;
+    }
+
+    progress::-webkit-progress-value {
+      background: var(--progress-bar-fill);
+      border-radius: var(--progress-bar-radius);
+      transition: inline-size 0.25s ease;
+      animation: var(--progress-bar-animation, revert-rule);
+    }
+
+    progress::-moz-progress-bar {
+      background: var(--progress-bar-fill);
+      border-radius: var(--progress-bar-radius);
+      transition: inline-size 0.25s ease;
+      animation: var(--progress-bar-animation, revert-rule);
+    }
+
+    progress.progress-blue {
+      --progress-bar-fill: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+    }
+
+    progress.progress-emerald {
+      --progress-bar-fill: linear-gradient(90deg, #059669 0%, #10b981 100%);
+    }
+
+    progress.progress-danger {
+      --progress-bar-fill: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+    }
+
+    @keyframes progress-bar-indeterminate {
+      from, to {
+        inline-size: var(--progress-bar-indeterminate-size);
+        margin-right: auto;
+      }
+      from { translate: -100%; }
+      to { translate: 100cqi; }
+    }
+
+    /* Directivas modern-web-guidance: Fallback @supports not (accent-color) */
+    @supports not (accent-color: #f97316) {
+      input[type="checkbox"] {
+        border: 2px solid #f97316;
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: #1e1e26;
+        height: 6px;
+        border-radius: 4px;
+      }
+    }
+
+    /* Ecualizador LED animado para el reproductor 30s */
+    @keyframes eq-bar {
+      0%, 100% { transform: scaleY(0.25); }
+      50% { transform: scaleY(1); }
+    }
+    .eq-bar-1 { animation: eq-bar 0.65s ease-in-out infinite; transform-origin: bottom; }
+    .eq-bar-2 { animation: eq-bar 0.45s ease-in-out infinite 0.15s; transform-origin: bottom; }
+    .eq-bar-3 { animation: eq-bar 0.75s ease-in-out infinite 0.3s; transform-origin: bottom; }
+    .eq-bar-4 { animation: eq-bar 0.55s ease-in-out infinite 0.1s; transform-origin: bottom; }
+
+    /* Scrollbar sutil de consola */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #272732;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f97316;
+    }
+  </style>
+</head>
+
+<body
+  x-data="bullakMusicApp()"
+  x-init="initApp()"
+  @keydown.window.space="handleGlobalSpace($event)"
+  class="min-h-screen flex flex-col selection:bg-orange-500/30 selection:text-orange-200 pb-24"
+>
+  <!-- Skip link de accesibilidad -->
+  <a href="#main-cockpit" class="visually-hidden focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-orange-500 focus:text-black focus:font-bold focus:rounded-lg">
+    Saltar al panel principal
+  </a>
+
+  <!-- Región aria-live centralizada para anuncios accesibles sin robar foco -->
+  <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" x-text="liveAnnouncement"></div>
+
+  <!-- ===================================================================== -->
+  <!-- HEADER: IDENTIDAD BULLAKMUSIC, TELEMETRÍA Y LINK A GITHUB             -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 border-b border-cockpit-border bg-[#09090b]/90 backdrop-blur-md">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+
+      <!-- Identidad de Marca: BullakMusic // CONVERTER // CAR AUDIO STUDIO -->
+      <div class="flex items-center gap-3.5">
+        <div class="relative w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 p-[1.5px] shadow-lg shadow-orange-500/20">
+          <div class="w-full h-full bg-[#0c0c10] rounded-[10.5px] flex items-center justify-center">
+            <!-- Isotipo SVG Personalizado: Monograma 'B' + Perilla/Ondas Hi-Fi -->
+            <svg role="img" aria-label="BullakMusic Logo" class="w-7 h-7" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="27" stroke="#272732" stroke-width="2" stroke-dasharray="4 3" />
+              <path d="M16 16h14c5.5 0 9.5 3.2 9.5 8 0 3.4-2 6-5.2 7 4 1 6.7 3.9 6.7 8 0 5.5-4.5 9-10.5 9H16V16zm7.5 12.5h5c2.2 0 3.8-1.3 3.8-3.3 0-2-1.6-3.2-3.8-3.2h-5v6.5zm0 13.5h5.8c2.6 0 4.3-1.4 4.3-3.7 0-2.2-1.7-3.6-4.3-3.6h-5.8V42z" fill="#ffffff"/>
+              <rect x="44.5" y="25" width="3.5" height="14" rx="1.75" fill="#f97316"/>
+              <rect x="50.5" y="19" width="3.5" height="26" rx="1.75" fill="#fb923c"/>
+            </svg>
+          </div>
+          <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-[#09090b]" title="Motor Car-Safe Activo"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <h1 id="main-cockpit" tabindex="-1" class="text-lg sm:text-xl font-bold tracking-tight text-white">
+              Bullak<span class="text-orange-500">Music</span>
+            </h1>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-widest bg-zinc-800/90 text-zinc-300 border border-zinc-700/70">
+              CONVERTER // CAR AUDIO STUDIO
+            </span>
+          </div>
+          <p class="text-xs text-zinc-400">
+            MP3 CBR 44.1 kHz &bull; ID3v2.3 &bull; Optimizado 100% para Estéreos de Auto
+          </p>
+        </div>
+      </div>
+
+      <!-- Barra de Telemetría Rápida, Estado del Sistema y Badge GitHub -->
+      <div class="flex items-center flex-wrap gap-2.5">
+        <!-- Indicador de Cola Activa en Segundo Plano -->
+        <div
+          x-show="downloadSummary.is_running"
+          x-cloak
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono bg-blue-950/60 border border-blue-500/40 text-blue-200"
+        >
+          <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+          <span x-text="'GRABANDO EN SEGUNDO PLANO: ' + downloadSummary.completed + '/' + downloadSummary.total"></span>
+        </div>
+
+        <!-- Indicador LED de FFmpeg -->
+        <button
+          type="button"
+          @click="openSystemModal()"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono border transition-all"
+          :class="systemStatus.ffmpeg_installed
+            ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300 hover:bg-emerald-900/40'
+            : 'bg-red-950/60 border-red-700 text-red-200 animate-pulse hover:bg-red-900/60'"
+        >
+          <span class="w-2 h-2 rounded-full" :class="systemStatus.ffmpeg_installed ? 'bg-emerald-400' : 'bg-red-400'"></span>
+          <span x-text="systemStatus.ffmpeg_installed ? 'FFMPEG 44.1kHz OK' : 'FALTA FFMPEG (CLIC AQUÍ)'"></span>
+        </button>
+
+        <!-- Indicador de Pendrive / Destino activo -->
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg cockpit-inset text-xs font-mono">
+          <i data-lucide="usb" class="w-3.5 h-3.5 text-orange-400"></i>
+          <span class="text-zinc-400">DESTINO:</span>
+          <span class="text-zinc-100 font-semibold truncate max-w-[190px]" x-text="folderInfo.label || selectedDir"></span>
+          <span
+            class="px-1.5 py-0.5 rounded text-[10px] font-bold"
+            :class="folderInfo.fstype === 'FAT32'
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'"
+            x-text="folderInfo.fstype || 'LOCAL'"
+          ></span>
+          <span class="text-emerald-400 font-semibold" x-text="folderInfo.free_gb + ' GB libres'"></span>
+        </div>
+
+        <!-- Botón Ajustes / Motor yt-dlp -->
+        <button
+          type="button"
+          @click="openSystemModal()"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-cockpit-panel hover:bg-cockpit-elevated text-zinc-200 border border-cockpit-borderBright transition"
+        >
+          <i data-lucide="cpu" class="w-4 h-4 text-orange-400"></i>
+          <span>Estado del Sistema</span>
+        </button>
+
+        <!-- Badge / Botón de GitHub (by bullak) -->
+        <a
+          href="https://github.com/bullak236/BullakMusic-converter"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 hover:text-orange-400 border border-zinc-700/80 transition"
+          title="Ver repositorio BullakMusic-converter en GitHub"
+        >
+          <svg aria-hidden="true" class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span>by <strong class="text-orange-400">bullak</strong></span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- CONTENIDO PRINCIPAL: GRID 12 COLUMNAS (EXPLORADOR 7 + CONSOLA USB 5)  -->
+  <!-- ===================================================================== -->
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- =================================================================== -->
+    <!-- COLUMNA IZQUIERDA (7 COLS): BUSCADOR, DESCUBRIMIENTO Y MIX          -->
+    <!-- =================================================================== -->
+    <div class="lg:col-span-7 flex flex-col gap-5">
+
+      <!-- Card 1: Selector de Modo + Buscador Combinado y Filtros Independientes -->
+      <section aria-labelledby="explorer-heading" class="cockpit-card rounded-2xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 id="explorer-heading" class="text-sm font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+            <i data-lucide="compass" class="w-4 h-4 text-orange-500"></i>
+            <span>Consola de Búsqueda y Descubrimiento</span>
+          </h2>
+
+          <!-- Tabs de Modo: Canciones | Artistas | Generador de Mix -->
+          <div role="tablist" aria-label="Modos de búsqueda" class="inline-flex p-1 rounded-xl cockpit-inset">
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="activeTab === 'songs'"
+              @click="switchTab('songs')"
+              class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
+              :class="activeTab === 'songs' ? 'bg-orange-500 text-zinc-950 shadow' : 'text-zinc-400 hover:text-white'"
+            >
+              <i data-lucide="music" class="w-3.5 h-3.5"></i>
+              <span>Canciones + Videos</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="activeTab === 'artists'"
+              @click="switchTab('artists')"
+              class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
+              :class="activeTab === 'artists' ? 'bg-orange-500 text-zinc-950 shadow' : 'text-zinc-400 hover:text-white'"
+            >
+              <i data-lucide="mic-2" class="w-3.5 h-3.5"></i>
+              <span>Artistas</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="activeTab === 'mix'"
+              @click="switchTab('mix')"
+              class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
+              :class="activeTab === 'mix' ? 'bg-blue-600 text-white shadow' : 'text-zinc-400 hover:text-white'"
+            >
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>Generador de Mix</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Formulario de Búsqueda (Canciones / Artistas) -->
+        <div x-show="activeTab !== 'mix'" class="space-y-3">
+          <form @submit.prevent="performSearch()" class="flex gap-2.5">
+            <div class="relative flex-1">
+              <label for="main-search-input" class="visually-hidden">Buscar canciones, remixes o artistas</label>
+              <i data-lucide="search" class="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input
+                id="main-search-input"
+                type="search"
+                x-model="searchQuery"
+                :placeholder="activeTab === 'artists' ? 'Ej: Attaque 77, Soda Stereo, Hernán y la Champions Liga...' : 'Buscar canción, remix, colaboración o artista...'"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl cockpit-inset text-sm text-white placeholder-zinc-500 focus:border-orange-500 transition"
+              />
+            </div>
+            <button
+              type="submit"
+              :disabled="isLoadingSearch"
+              class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 active:scale-[0.99] text-zinc-950 font-bold text-sm transition flex items-center gap-2 disabled:opacity-50"
+            >
+              <i data-lucide="search" class="w-4 h-4"></i>
+              <span x-text="isLoadingSearch ? 'Buscando...' : 'Buscar'"></span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Panel del Generador de Mix Inteligente (1 a 5 semillas) -->
+        <div x-show="activeTab === 'mix'" x-cloak class="space-y-4 pt-1">
+          <div class="p-3.5 rounded-xl bg-blue-950/25 border border-blue-800/40 text-xs text-blue-200 flex items-start gap-3">
+            <i data-lucide="radio" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
+            <div>
+              <p class="font-semibold text-blue-100">Armador Automático de Mix para Ruta</p>
+              <p class="text-blue-300/80 mt-0.5">
+                Ingresá de <strong>1 a 5 artistas o canciones semilla</strong>. Combinaremos sus mejores temas y sus radios musicales (<code class="font-mono">get_watch_playlist</code>) intercalando pistas sin repeticiones.
+              </p>
+            </div>
+          </div>
+
+          <!-- Input para agregar semilla -->
+          <div class="flex flex-wrap gap-2">
+            <div class="flex-1 min-w-[220px] flex gap-2">
+              <label for="mix-seed-input" class="visually-hidden">Agregar artista o tema semilla</label>
+              <input
+                id="mix-seed-input"
+                type="text"
+                x-model="newSeedInput"
+                @keydown.enter.prevent="addMixSeed()"
+                :disabled="mixSeeds.length >= 5"
+                placeholder="Escribí un artista o tema y presioná Enter (ej: Attaque 77, Creedence...)"
+                class="flex-1 px-3.5 py-2 rounded-xl cockpit-inset text-sm text-white placeholder-zinc-500"
+              />
+              <button
+                type="button"
+                @click="addMixSeed()"
+                :disabled="mixSeeds.length >= 5 || !newSeedInput.trim()"
+                class="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-white border border-zinc-700 disabled:opacity-40 transition"
+              >
+                + Agregar Semilla (<span class="font-mono" x-text="mixSeeds.length + '/5'"></span>)
+              </button>
+            </div>
+          </div>
+
+          <!-- Chips de semillas activas -->
+          <div class="flex flex-wrap items-center gap-2">
+            <template x-for="(seed, idx) in mixSeeds" :key="idx">
+              <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/40">
+                <i data-lucide="sparkles" class="w-3 h-3 text-blue-400"></i>
+                <span x-text="seed"></span>
+                <button
+                  type="button"
+                  @click="removeMixSeed(idx)"
+                  :aria-label="'Quitar semilla ' + seed"
+                  class="hover:text-white text-blue-300"
+                >
+                  &times;
+                </button>
+              </span>
+            </template>
+            <span x-show="mixSeeds.length === 0" class="text-xs text-zinc-500 italic">
+              Todavía no hay semillas. Probá agregando tus artistas favoritos o usá un preset rápido:
+            </span>
+          </div>
+
+          <!-- Presets rápidos para poblar semillas con 1 clic -->
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="text-zinc-500 font-mono">PRESETS:</span>
+            <button type="button" @click="loadMixPreset(['Attaque 77', 'Soda Stereo', 'Los Piojos', 'Divididos'])" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition">
+              Rock Nacional Ruta
+            </button>
+            <button type="button" @click="loadMixPreset(['Hernán y La Champions Liga', 'BM', 'Callejero Fino', 'Ke Personajes'])" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition">
+              Cumbia & Urbano Mix
+            </button>
+            <button type="button" @click="loadMixPreset(['Creedence Clearwater Revival', 'Queen', 'AC/DC', 'Dire Straits'])" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition">
+              Clásicos de Autopista
+            </button>
+            <button type="button" @click="loadMixPreset(['Los Palmeras', 'Gilda', 'Rodrigo', 'La Nueva Luna'])" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition">
+              Finde & Fiesta
+            </button>
+          </div>
+
+          <!-- Cantidad deseada + Botón Generar Mix -->
+          <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-cockpit-border">
+            <div class="flex items-center gap-3">
+              <label for="mix-count-range" class="text-xs text-zinc-300 font-medium">
+                Cantidad de canciones:
+                <span class="font-mono font-bold text-blue-400 ml-1" x-text="mixTotalCount + ' temas'"></span>
+              </label>
+              <input
+                id="mix-count-range"
+                type="range"
+                min="10"
+                max="80"
+                step="5"
+                x-model.number="mixTotalCount"
+                class="w-36"
+              />
+            </div>
+
+            <button
+              type="button"
+              @click="generateMix()"
+              :disabled="isLoadingSearch || (mixSeeds.length === 0 && !newSeedInput.trim())"
+              class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition flex items-center gap-2 shadow-lg shadow-blue-600/25 disabled:opacity-50"
+            >
+              <i data-lucide="wand-2" class="w-4 h-4"></i>
+              <span x-text="isLoadingSearch ? 'Armando Mix Balanceado...' : 'Generar Mix para Pendrive'"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Filtros Independientes y Autoexplicativos (Chips Interactivos con Ayuda) -->
+        <div class="mt-4 pt-3.5 border-t border-cockpit-border space-y-2.5 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-[11px] font-mono uppercase tracking-wider text-zinc-400 mr-1">FILTROS:</span>
+
+              <!-- 1. Anti-Enganchados -->
+              <div class="inline-flex items-center rounded-xl border transition"
+                :class="filters.antiLongTracks ? 'bg-orange-500/15 border-orange-500/40 text-orange-200' : 'bg-zinc-900/90 border-zinc-800 text-zinc-400'"
+                title="Oculta enganchados o sets largos que superen los minutos indicados"
+              >
+                <button
+                  type="button"
+                  :aria-pressed="filters.antiLongTracks"
+                  @click="filters.antiLongTracks = !filters.antiLongTracks; reapplyFiltersOrSearch()"
+                  class="px-2.5 py-1 text-xs font-medium flex items-center gap-1.5"
+                >
+                  <span x-text="filters.antiLongTracks ? '✓' : '+'"></span>
+                  <span>Anti-enganchados</span>
+                </button>
+                <select
+                  aria-label="Duración máxima en minutos"
+                  x-show="filters.antiLongTracks"
+                  x-model.number="filters.maxDurationMins"
+                  @change="reapplyFiltersOrSearch()"
+                  class="bg-transparent border-l border-orange-500/30 px-2 py-1 font-mono text-[11px] text-orange-300 focus:outline-none"
+                >
+                  <option value="7" class="bg-zinc-900 text-white">&lt; 7m</option>
+                  <option value="8" class="bg-zinc-900 text-white">&lt; 8m</option>
+                  <option value="9" class="bg-zinc-900 text-white">&lt; 9m</option>
+                  <option value="12" class="bg-zinc-900 text-white">&lt; 12m</option>
+                  <option value="20" class="bg-zinc-900 text-white">&lt; 20m</option>
+                </select>
+              </div>
+
+              <!-- 2. Sin Karaoke / Pistas (Activo por defecto) -->
+              <button
+                type="button"
+                :aria-pressed="filters.excludeKaraoke"
+                @click="filters.excludeKaraoke = !filters.excludeKaraoke; reapplyFiltersOrSearch()"
+                class="px-2.5 py-1 rounded-xl border text-xs font-medium transition flex items-center gap-1.5"
+                :class="filters.excludeKaraoke ? 'bg-orange-500/15 border-orange-500/40 text-orange-200' : 'bg-zinc-900/90 border-zinc-800 text-zinc-400 hover:text-zinc-200'"
+                title="Oculta pistas de karaoke, instrumentales sin voz y backing tracks (Activo por defecto)"
+              >
+                <span x-text="filters.excludeKaraoke ? '✓' : '+'"></span>
+                <span>Sin Karaoke / Pistas</span>
+              </button>
+
+              <!-- 3. Sin En Vivo (Desactivado por defecto) -->
+              <button
+                type="button"
+                :aria-pressed="filters.excludeLive"
+                @click="filters.excludeLive = !filters.excludeLive; reapplyFiltersOrSearch()"
+                class="px-2.5 py-1 rounded-xl border text-xs font-medium transition flex items-center gap-1.5"
+                :class="filters.excludeLive ? 'bg-orange-500/15 border-orange-500/40 text-orange-200' : 'bg-zinc-900/90 border-zinc-800 text-zinc-400 hover:text-zinc-200'"
+                title="Activalo si querés ocultar recitales, acústicos unplugged y grabaciones En Vivo"
+              >
+                <span x-text="filters.excludeLive ? '✓' : '+'"></span>
+                <span>Sin En Vivo</span>
+              </button>
+
+              <!-- 4. Sin Remix (Desactivado por defecto para no ocultar colaboraciones/remixes oficiales) -->
+              <button
+                type="button"
+                :aria-pressed="filters.excludeRemix"
+                @click="filters.excludeRemix = !filters.excludeRemix; reapplyFiltersOrSearch()"
+                class="px-2.5 py-1 rounded-xl border text-xs font-medium transition flex items-center gap-1.5"
+                :class="filters.excludeRemix ? 'bg-orange-500/15 border-orange-500/40 text-orange-200' : 'bg-zinc-900/90 border-zinc-800 text-zinc-400 hover:text-zinc-200'"
+                title="Desactivado por defecto para incluir Remixes oficiales y colaboraciones. Activalo para ocultarlos."
+              >
+                <span x-text="filters.excludeRemix ? '✓' : '+'"></span>
+                <span>Sin Remix</span>
+              </button>
+
+              <!-- 5. Sin Covers / Tributo (Desactivado por defecto) -->
+              <button
+                type="button"
+                :aria-pressed="filters.excludeCover"
+                @click="filters.excludeCover = !filters.excludeCover; reapplyFiltersOrSearch()"
+                class="px-2.5 py-1 rounded-xl border text-xs font-medium transition flex items-center gap-1.5"
+                :class="filters.excludeCover ? 'bg-orange-500/15 border-orange-500/40 text-orange-200' : 'bg-zinc-900/90 border-zinc-800 text-zinc-400 hover:text-zinc-200'"
+                title="Activalo si querés ocultar bandas tributo, homenajes y versiones cover"
+              >
+                <span x-text="filters.excludeCover ? '✓' : '+'"></span>
+                <span>Sin Covers / Tributo</span>
+              </button>
+            </div>
+
+            <div class="text-zinc-500 font-mono text-[11px]" x-show="existingMp3Count > 0">
+              <span class="text-emerald-400 font-semibold" x-text="existingMp3Count"></span> MP3 en destino
+            </div>
+          </div>
+
+          <p class="text-[11px] text-zinc-500">
+            <span class="text-zinc-400 font-medium">Tip:</span> Por defecto se incluyen <strong>Canciones + Videos Musicales</strong> (remixes y colaboraciones oficiales) y solo se ocultan karaokes y pistas de más de <span class="font-mono" x-text="filters.maxDurationMins + ' min'"></span>.
+          </p>
+        </div>
+      </section>
+
+      <!-- Card 2: Lista de Resultados / Explorador de Artista (Top 60 + Selector Top N) -->
+      <section aria-labelledby="results-heading" class="cockpit-card rounded-2xl p-5 flex-1 flex flex-col min-h-[460px]">
+
+        <!-- Cabecera de Resultados con Acciones en Lote -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3.5 mb-3 border-b border-cockpit-border">
+          <div class="flex items-center gap-2.5">
+            <button
+              type="button"
+              x-show="navigationContext.canGoBack"
+              @click="goBackFromContext()"
+              class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+              aria-label="Volver a los resultados anteriores"
+            >
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            </button>
+            <div>
+              <h2 id="results-heading" class="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+                <span x-text="resultsTitle"></span>
+                <span
+                  x-show="displayedTracks.length > 0"
+                  class="px-2 py-0.5 rounded-full text-xs font-mono bg-zinc-800 text-orange-400 border border-zinc-700"
+                  x-text="displayedTracks.length + ' disponibles'"
+                ></span>
+              </h2>
+              <p class="text-xs text-zinc-400" x-show="resultsSubtitle" x-text="resultsSubtitle"></p>
+            </div>
+          </div>
+
+          <!-- Botones Seleccionar Todo / Limpiar tildes de esta vista -->
+          <div class="flex items-center flex-wrap gap-2" x-show="displayedTracks.length > 0 && activeViewMode === 'tracks'">
+            <button
+              type="button"
+              @click="addAllVisibleToQueue(true)"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/30 transition flex items-center gap-1.5"
+              title="Tilda todas las canciones de la lista que no estén ya en el pendrive ni en la cola activa"
+            >
+              <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+              <span>Tildar todos (sin duplicados)</span>
+            </button>
+            <button
+              type="button"
+              @click="deselectVisibleFromQueue()"
+              class="px-2.5 py-1.5 rounded-lg text-xs text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 transition"
+            >
+              Destildar vista
+            </button>
+          </div>
+        </div>
+
+        <!-- BARRA FLOTANTE DE SELECCIÓN ACTUAL (Aparece apenas tildás 1 o más temas) -->
+        <div
+          x-show="queue.length > 0"
+          x-cloak
+          class="mb-3.5 p-3 rounded-xl bg-gradient-to-r from-orange-500/20 via-amber-500/15 to-zinc-900 border border-orange-500/50 flex flex-wrap items-center justify-between gap-3 shadow-lg"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-orange-500 text-zinc-950 font-mono font-bold text-xs flex items-center justify-center" x-text="queue.length"></span>
+            <div>
+              <p class="text-xs font-bold text-white">
+                <span x-text="queue.length === 1 ? '1 tema tildado listo para encolar' : queue.length + ' temas tildados listos para encolar'"></span>
+              </p>
+              <p class="text-[11px] text-orange-200/80">
+                Al enviarlos se suman a la descarga activa y los checkboxes quedan limpios para seguir buscando otra banda.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="clearQueueSelection()"
+              class="px-2.5 py-1.5 rounded-lg text-xs text-zinc-300 hover:text-white bg-zinc-900/90 border border-zinc-700 transition"
+            >
+              Limpiar tildes
+            </button>
+            <button
+              type="button"
+              @click="startBatchDownload()"
+              class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-400 text-zinc-950 shadow transition flex items-center gap-1.5"
+            >
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+              <span x-text="downloadSummary.is_running ? 'Sumar ' + queue.length + ' a la descarga activa' : 'Agregar ' + queue.length + ' a la cola y descargar'"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SKELETON DE CARGA -->
+        <div x-show="isLoadingSearch" class="space-y-2.5 py-2">
+          <template x-for="i in 6" :key="i">
+            <div class="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 animate-pulse flex items-center gap-3.5">
+              <div class="w-12 h-12 rounded-lg bg-zinc-800"></div>
+              <div class="flex-1 space-y-2">
+                <div class="h-3.5 bg-zinc-800 rounded w-2/5"></div>
+                <div class="h-2.5 bg-zinc-800/70 rounded w-1/4"></div>
+              </div>
+              <div class="w-20 h-7 bg-zinc-800 rounded-lg"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- VISTA DE ARTISTAS (Grilla de tarjetas) -->
+        <div
+          x-show="!isLoadingSearch && activeViewMode === 'artists' && artistResults.length > 0"
+          x-cloak
+          class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+        >
+          <template x-for="artist in artistResults" :key="artist.browseId">
+            <button
+              type="button"
+              @click="openArtistProfile(artist)"
+              class="text-left p-3.5 rounded-xl bg-cockpit-panel hover:bg-cockpit-elevated border border-cockpit-border hover:border-orange-500/50 transition flex items-center gap-3.5 group"
+            >
+              <img
+                :src="proxyImage(artist.thumbnail)"
+                :alt="'Foto de ' + artist.name"
+                class="w-14 h-14 rounded-full object-cover border border-zinc-700 group-hover:border-orange-500 transition"
+                loading="lazy"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-white truncate group-hover:text-orange-400 transition" x-text="artist.name"></p>
+                <p class="text-xs text-zinc-400 truncate" x-text="artist.subscribers"></p>
+                <span class="inline-flex items-center gap-1 text-[11px] text-orange-400 font-mono mt-1">
+                  Ver Top 60 Canciones y Álbumes &rarr;
+                </span>
+              </div>
+            </button>
+          </template>
+        </div>
+
+        <!-- CABECERA DE ARTISTA SELECCIONADO: SELECTOR "TOP N MÁS CONOCIDOS" + ÁLBUMES Y SINGLES -->
+        <div
+          x-show="!isLoadingSearch && currentArtistProfile"
+          x-cloak
+          class="mb-4 p-4 rounded-xl bg-gradient-to-r from-orange-950/30 via-zinc-900/80 to-zinc-900/50 border border-orange-500/25 space-y-3.5"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3.5">
+              <img
+                :src="proxyImage(currentArtistProfile?.thumbnail)"
+                :alt="currentArtistProfile?.name || 'Artista'"
+                class="w-14 h-14 rounded-full object-cover border-2 border-orange-500"
+              />
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-orange-500/20 text-orange-300">
+                    Perfil de Artista
+                  </span>
+                  <span class="text-xs font-mono text-zinc-400" x-text="(currentArtistProfile?.top_songs?.length || 0) + ' temas populares'"></span>
+                </div>
+                <h3 class="text-lg font-bold text-white mt-0.5" x-text="currentArtistProfile?.name"></h3>
+              </div>
+            </div>
+
+            <!-- Botón para volver a mostrar el Top 60 si el usuario entró a un álbum del artista -->
+            <button
+              type="button"
+              x-show="resultsTitle.startsWith('Álbum:')"
+              @click="restoreArtistTopSongs()"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-orange-300 border border-orange-500/30 transition"
+            >
+              &larr; Volver al Top Populares de <span x-text="currentArtistProfile?.name"></span>
+            </button>
+          </div>
+
+          <!-- BARRA DE SELECCIÓN RÁPIDA: "SELECCIONAR TOP N MÁS CONOCIDOS" -->
+          <div class="p-3 rounded-xl cockpit-inset flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs">
+              <i data-lucide="award" class="w-4 h-4 text-orange-400"></i>
+              <span class="font-semibold text-white">Seleccionar Top más conocidos:</span>
+              <span class="text-zinc-400 hidden sm:inline">(tilda los primeros N sin duplicados y podés ajustar a mano)</span>
+            </div>
+
+            <div class="flex items-center flex-wrap gap-1.5">
+              <button
+                type="button"
+                @click="selectTopNTracks(10)"
+                class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-zinc-800 hover:bg-orange-500 hover:text-zinc-950 text-zinc-200 border border-zinc-700 transition"
+              >
+                Top 10
+              </button>
+              <button
+                type="button"
+                @click="selectTopNTracks(20)"
+                class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-zinc-800 hover:bg-orange-500 hover:text-zinc-950 text-zinc-200 border border-zinc-700 transition"
+              >
+                Top 20
+              </button>
+              <button
+                type="button"
+                @click="selectTopNTracks(30)"
+                class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-orange-500/20 hover:bg-orange-500 hover:text-zinc-950 text-orange-300 border border-orange-500/40 transition"
+              >
+                Top 30
+              </button>
+
+              <!-- Campo numérico editable para cualquier cantidad N -->
+              <div class="inline-flex items-center gap-1 ml-1">
+                <label for="artist-top-custom-n" class="visually-hidden">Cantidad personalizada del Top</label>
+                <input
+                  id="artist-top-custom-n"
+                  type="number"
+                  min="1"
+                  max="60"
+                  x-model.number="artistTopCustomN"
+                  @keydown.enter.prevent="selectTopNTracks(artistTopCustomN)"
+                  class="w-14 px-2 py-1 rounded-lg bg-zinc-900 border border-zinc-700 font-mono text-xs text-center text-white"
+                />
+                <button
+                  type="button"
+                  @click="selectTopNTracks(artistTopCustomN)"
+                  class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-orange-300 border border-zinc-700 transition"
+                >
+                  Tildar N
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Carrusel horizontal de Álbumes y Singles/EPs del artista -->
+          <div x-show="currentArtistProfile?.albums?.length > 0" class="pt-1 border-t border-zinc-800/80">
+            <p class="text-xs font-mono text-zinc-400 mb-2">ÁLBUMES Y SINGLES / EPs (CLIC PARA VER SUS PISTAS):</p>
+            <div class="flex gap-2.5 overflow-x-auto pb-1.5">
+              <template x-for="alb in (currentArtistProfile?.albums || [])" :key="alb.browseId">
+                <button
+                  type="button"
+                  @click="openAlbumTracks(alb)"
+                  class="shrink-0 w-36 p-2 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-orange-500/50 text-left transition"
+                >
+                  <div class="relative">
+                    <img
+                      :src="proxyImage(alb.thumbnail)"
+                      :alt="alb.title"
+                      class="w-full h-24 object-cover rounded-lg mb-1.5"
+                      loading="lazy"
+                    />
+                    <span
+                      class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-black/80 text-zinc-200 border border-zinc-700"
+                      x-text="alb.type || 'Álbum'"
+                    ></span>
+                  </div>
+                  <p class="text-xs font-semibold text-white truncate" x-text="alb.title"></p>
+                  <p class="text-[10px] font-mono text-zinc-400" x-text="alb.year"></p>
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- LISTA DE CANCIONES (Tarjetas Interactivas con Preview 30s + Badges de Estado + Botón Similares) -->
+        <div
+          x-show="!isLoadingSearch && activeViewMode === 'tracks' && displayedTracks.length > 0"
+          class="space-y-2 max-h-[600px] overflow-y-auto pr-1"
+        >
+          <template x-for="(track, tIdx) in displayedTracks" :key="track.videoId">
+            <div
+              class="p-2.5 sm:p-3 rounded-xl border transition-all flex items-center gap-3 group"
+              :class="isInQueue(track.videoId)
+                ? 'bg-orange-500/12 border-orange-500/50'
+                : (isTrackInActiveDownloads(track.videoId)
+                    ? 'bg-blue-950/25 border-blue-700/40'
+                    : (track.already_in_dest
+                        ? 'bg-emerald-950/15 border-emerald-900/40 opacity-85'
+                        : 'bg-cockpit-panel hover:bg-cockpit-elevated border-cockpit-border'))"
+            >
+              <!-- Checkbox de Selección Temporal + Número de orden -->
+              <label :for="'chk-' + track.videoId" class="flex items-center gap-2 cursor-pointer p-1">
+                <input
+                  :id="'chk-' + track.videoId"
+                  type="checkbox"
+                  :checked="isInQueue(track.videoId)"
+                  @change="toggleQueueTrack(track)"
+                  class="w-4 h-4 rounded cursor-pointer"
+                />
+                <span class="font-mono text-[11px] text-zinc-500 w-5 text-right hidden sm:inline" x-text="tIdx + 1"></span>
+                <span class="visually-hidden" x-text="'Seleccionar ' + track.title + ' de ' + track.artist"></span>
+              </label>
+
+              <!-- Portada + Botón Play/Pause de Preview 30s superpuesto -->
+              <div class="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-zinc-900 border border-zinc-800">
+                <img
+                  :src="proxyImage(track.thumbnail)"
+                  :alt="'Portada de ' + track.title"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <button
+                  type="button"
+                  @click="togglePreview(track)"
+                  :aria-label="preview.videoId === track.videoId && preview.isPlaying ? 'Pausar preview de ' + track.title : 'Escuchar preview de 30s de ' + track.title"
+                  class="absolute inset-0 flex items-center justify-center transition"
+                  :class="preview.videoId === track.videoId && preview.isPlaying
+                    ? 'bg-orange-500/85 text-zinc-950'
+                    : 'bg-black/55 opacity-0 group-hover:opacity-100 focus:opacity-100 text-white hover:bg-orange-500/80 hover:text-zinc-950'"
+                >
+                  <span x-show="!(preview.videoId === track.videoId && preview.isPlaying)" class="font-bold text-sm">&#9654;</span>
+                  <span x-show="preview.videoId === track.videoId && preview.isPlaying" class="font-bold text-xs">&#10074;&#10074;</span>
+                </button>
+              </div>
+
+              <!-- Información de la Pista + Badges de Estado Claros -->
+              <div class="flex-1 min-w-0 cursor-pointer" @click="toggleQueueTrack(track)">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <p class="text-sm font-semibold text-white truncate" x-text="track.title"></p>
+
+                  <!-- Badge: En cola / Descargando en esta sesión -->
+                  <span
+                    x-show="getTrackSessionStatus(track.videoId) === 'active'"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                  >
+                    &#8635; En cola activa
+                  </span>
+
+                  <!-- Badge: Descargado en esta sesión -->
+                  <span
+                    x-show="getTrackSessionStatus(track.videoId) === 'completed'"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/25 text-emerald-200 border border-emerald-500/40"
+                  >
+                    &#10003; Descargado
+                  </span>
+
+                  <!-- Badge Anti-Duplicados: "Ya en destino" -->
+                  <span
+                    x-show="track.already_in_dest && getTrackSessionStatus(track.videoId) !== 'completed'"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    title="Esta canción ya fue encontrada en el pendrive o carpeta destino"
+                  >
+                    &#10003; Ya en destino
+                  </span>
+
+                  <!-- Badge discreto VIDEO cuando proviene de búsqueda de videos musicales -->
+                  <span
+                    x-show="track.source_type === 'video'"
+                    class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                    title="Extraído de Video Musical oficial (se convierte a MP3 CBR 44.1 kHz)"
+                  >
+                    VIDEO
+                  </span>
+
+                  <!-- Badges de categoría detectada -->
+                  <span
+                    x-show="track.is_remix"
+                    class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-cyan-500/15 text-cyan-300 border border-cyan-500/30"
+                  >
+                    REMIX
+                  </span>
+                  <span
+                    x-show="track.is_live"
+                    class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                  >
+                    EN VIVO
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
+                  <span class="text-zinc-300 font-medium truncate" x-text="track.artist"></span>
+                  <span>&bull;</span>
+                  <span class="truncate text-zinc-500" x-text="track.album"></span>
+                </div>
+              </div>
+
+              <!-- Duración en JetBrains Mono -->
+              <span class="font-mono text-xs text-zinc-400 shrink-0" x-text="track.duration"></span>
+
+              <!-- Acciones Rápidas: Preview 30s y Temas Similares -->
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  @click="togglePreview(track)"
+                  class="px-2.5 py-1.5 rounded-lg text-xs font-mono border transition flex items-center gap-1"
+                  :class="preview.videoId === track.videoId && preview.isPlaying
+                    ? 'bg-orange-500 text-zinc-950 border-orange-400 font-bold'
+                    : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'"
+                  :title="preview.videoId === track.videoId && preview.isPlaying ? 'Pausar preescucha' : 'Preescuchar 30 segundos'"
+                >
+                  <span x-text="preview.videoId === track.videoId && preview.isPlaying ? 'PAUSA' : '30s'"></span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="discoverSimilarSongs(track)"
+                  class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 transition flex items-center gap-1"
+                  title="Descubrir temas similares o del mismo género sin salir de la pantalla"
+                >
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  <span class="hidden sm:inline">Similares</span>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- EMPTY STATE (Estado vacío con atajos rápidos) -->
+        <div
+          x-show="!isLoadingSearch && displayedTracks.length === 0 && artistResults.length === 0"
+          class="flex-1 flex flex-col items-center justify-center text-center py-12 px-4"
+        >
+          <div class="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 text-orange-500">
+            <i data-lucide="radio-receiver" class="w-8 h-8"></i>
+          </div>
+          <h3 class="text-base font-bold text-white">BullakMusic Studio Listo para Grabar</h3>
+          <p class="text-xs text-zinc-400 max-w-md mt-1 leading-relaxed">
+            Buscá canciones, remixes o artistas arriba. Podés <strong>ir sumando bandas a la cola de descarga sin esperar</strong> a que termine la anterior.
+          </p>
+          <div class="mt-5 flex flex-wrap justify-center gap-2">
+            <button type="button" @click="quickArtistSearch('Attaque 77')" class="px-3 py-1.5 rounded-lg text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition">
+              &#127928; Artista: Attaque 77
+            </button>
+            <button type="button" @click="quickSearch('Despójate Hernán y la Champions Liga')" class="px-3 py-1.5 rounded-lg text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition">
+              &#127911; Despójate (Remix)
+            </button>
+            <button type="button" @click="quickSearch('Soda Stereo')" class="px-3 py-1.5 rounded-lg text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition">
+              &#128663; Soda Stereo
+            </button>
+            <button type="button" @click="switchTab('mix')" class="px-3 py-1.5 rounded-lg text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition">
+              &#10024; Abrir Generador de Mix
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- COLUMNA DERECHA (5 COLS): PENDRIVE, PERFIL CAR-SAFE Y COLA CONTINUA -->
+    <!-- =================================================================== -->
+    <aside aria-label="Configuración de Pendrive y Cola de Descarga" class="lg:col-span-5 flex flex-col gap-5">
+
+      <!-- Card 3: Detector de Pendrives y Selector de Carpeta -->
+      <section aria-labelledby="usb-drive-heading" class="cockpit-card rounded-2xl p-5">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h2 id="usb-drive-heading" class="text-sm font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+            <i data-lucide="hard-drive" class="w-4 h-4 text-orange-500"></i>
+            <span>1. Unidad USB / Carpeta Destino</span>
+          </h2>
+          <button
+            type="button"
+            @click="refreshDrives()"
+            class="text-xs font-mono text-orange-400 hover:text-orange-300 flex items-center gap-1"
+            title="Refrescar unidades USB conectadas"
+          >
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Escanear USB</span>
+          </button>
+        </div>
+
+        <!-- Lista de Unidades Detectadas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
+          <template x-for="drv in drives" :key="drv.mountpoint">
+            <button
+              type="button"
+              @click="selectDrive(drv.mountpoint)"
+              class="p-3 rounded-xl border text-left transition flex flex-col justify-between"
+              :class="selectedDir === drv.mountpoint
+                ? 'bg-orange-500/15 border-orange-500 text-white'
+                : 'bg-cockpit-panel hover:bg-cockpit-elevated border-cockpit-border text-zinc-300'"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-mono font-bold text-xs flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full" :class="drv.is_removable ? 'bg-orange-400' : 'bg-zinc-500'"></span>
+                  <span x-text="drv.letter + ' [' + drv.label + ']'"></span>
+                </span>
+                <span
+                  class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"
+                  :class="drv.fstype === 'FAT32' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'"
+                  x-text="drv.fstype"
+                ></span>
+              </div>
+              <div class="mt-2 flex items-center justify-between text-[11px] font-mono text-zinc-400">
+                <span x-text="drv.is_removable ? 'Extraíble USB' : 'Disco Local'"></span>
+                <span class="text-emerald-400 font-semibold" x-text="drv.free_gb + ' GB libres'"></span>
+              </div>
+            </button>
+          </template>
+        </div>
+
+        <!-- Ruta manual o Selector Nativo (Subproceso Tkinter topmost) -->
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label for="destination-path-input" class="visually-hidden">Ruta de carpeta destino</label>
+            <input
+              id="destination-path-input"
+              type="text"
+              x-model="selectedDir"
+              @change="refreshDrives(selectedDir)"
+              placeholder="Pegá la ruta o elegí carpeta..."
+              class="w-full px-3 py-2 rounded-xl cockpit-inset font-mono text-xs text-zinc-200"
+            />
+          </div>
+          <button
+            type="button"
+            @click="pickNativeFolder()"
+            :disabled="isPickingFolder"
+            class="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-white border border-zinc-700 transition flex items-center gap-1.5 shrink-0"
+          >
+            <i data-lucide="folder-open" class="w-3.5 h-3.5 text-orange-400"></i>
+            <span x-text="isPickingFolder ? 'Abriendo...' : 'Elegir Carpeta'"></span>
+          </button>
+          <button
+            type="button"
+            @click="openDestinationFolder()"
+            class="px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 border border-zinc-800 transition shrink-0"
+            title="Abrir carpeta destino en el Explorador"
+          >
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <!-- Alerta Amigable FAT32 vs NTFS / exFAT -->
+        <div
+          x-show="folderInfo.car_warning"
+          x-cloak
+          class="mt-3 p-3 rounded-xl bg-amber-950/40 border border-amber-700/50 text-xs text-amber-200 flex items-start gap-2.5"
+        >
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+          <div class="leading-relaxed" x-text="folderInfo.car_warning"></div>
+        </div>
+      </section>
+
+      <!-- Card 4: Perfil "Estéreo de Auto" y Barra Visual de Capacidad -->
+      <section aria-labelledby="car-profile-heading" class="cockpit-card rounded-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="car-profile-heading" class="text-sm font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+            <i data-lucide="sliders" class="w-4 h-4 text-orange-500"></i>
+            <span>2. Perfil "Estéreo de Auto" (Car-Safe)</span>
+          </h2>
+          <span class="text-[11px] font-mono text-emerald-400 bg-emerald-950/50 border border-emerald-800/50 px-2 py-0.5 rounded">
+            44.1 kHz &bull; ID3v2.3 &bull; Cover &lt;100KB
+          </span>
+        </div>
+
+        <!-- Barra Visual de Capacidad (Peso Estimado vs Espacio Libre del Pendrive) -->
+        <div class="p-3.5 rounded-xl cockpit-inset space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-zinc-400 font-medium">Capacidad estimada (tildados + cola activa):</span>
+            <span class="font-mono font-bold" :class="estimatedQueueMB > (folderInfo.free_gb * 1024) ? 'text-red-400' : 'text-orange-400'">
+              <span x-text="estimatedQueueMB.toFixed(1) + ' MB'"></span>
+              <span class="text-zinc-500 font-normal">/</span>
+              <span class="text-emerald-400" x-text="(folderInfo.free_gb || 0) + ' GB libres'"></span>
+            </span>
+          </div>
+          <label for="usb-capacity-progress" class="visually-hidden">Porcentaje de espacio a ocupar</label>
+          <progress
+            id="usb-capacity-progress"
+            max="100"
+            :value="capacityPercent"
+            class="w-full h-2.5 block"
+            :class="capacityPercent > 90 ? 'progress-danger' : 'progress-emerald'"
+          ></progress>
+          <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500">
+            <span x-text="queue.length + ' tildados ahora (' + totalQueueDurationFormatted + ')'"></span>
+            <span x-text="'CBR ' + exportOptions.bitrate + ' kbps'"></span>
+          </div>
+        </div>
+
+        <!-- Opciones de Exportación -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <!-- Calidad MP3 CBR -->
+          <div class="p-3 rounded-xl bg-cockpit-panel border border-cockpit-border">
+            <label for="select-bitrate" class="block text-zinc-400 font-mono text-[11px] mb-1.5">CALIDAD MP3 CBR</label>
+            <select
+              id="select-bitrate"
+              x-model.number="exportOptions.bitrate"
+              class="w-full px-2.5 py-1.5 rounded-lg cockpit-inset text-white font-medium"
+            >
+              <option value="192">192 kbps (Recomendado Auto)</option>
+              <option value="320">320 kbps (Máxima Fidelidad)</option>
+            </select>
+          </div>
+
+          <!-- Organización de Archivos (Flat / Artista / Shuffle Físico) -->
+          <div class="p-3 rounded-xl bg-cockpit-panel border border-cockpit-border">
+            <label for="select-organization" class="block text-zinc-400 font-mono text-[11px] mb-1.5">ORGANIZACIÓN EN USB</label>
+            <select
+              id="select-organization"
+              x-model="exportOptions.organization"
+              class="w-full px-2.5 py-1.5 rounded-lg cockpit-inset text-white font-medium"
+            >
+              <option value="flat">Todo en una carpeta</option>
+              <option value="artist_folders">Subcarpetas por Artista</option>
+              <option value="physical_shuffle">Shuffle Físico (001 - Artista...)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Toggles: Normalización EBU R128 + Modo Estéreo Antiguo ASCII + Concurrencia -->
+        <div class="space-y-2.5 text-xs">
+          <label for="toggle-normalize" class="p-3 rounded-xl bg-cockpit-panel border border-cockpit-border flex items-start gap-3 cursor-pointer hover:border-zinc-700 transition">
+            <input
+              id="toggle-normalize"
+              type="checkbox"
+              x-model="exportOptions.normalize"
+              class="mt-0.5 w-4 h-4 rounded"
+            />
+            <div class="flex-1">
+              <div class="font-semibold text-white flex items-center gap-2">
+                <span>Normalizar volumen parejo en ruta</span>
+                <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-300">-14 LUFS</span>
+              </div>
+              <p class="text-zinc-400 text-[11px] mt-0.5">
+                Aplica <code class="font-mono">loudnorm + aresample=44100</code> en FFmpeg para que ningún tema suene más bajo o sature los parlantes.
+              </p>
+            </div>
+          </label>
+
+          <label for="toggle-ascii" class="p-3 rounded-xl bg-cockpit-panel border border-cockpit-border flex items-start gap-3 cursor-pointer hover:border-zinc-700 transition">
+            <input
+              id="toggle-ascii"
+              type="checkbox"
+              x-model="exportOptions.ascii_mode"
+              class="mt-0.5 w-4 h-4 rounded"
+            />
+            <div class="flex-1">
+              <div class="font-semibold text-white flex items-center gap-2">
+                <span>Modo Estéreo Antiguo (ASCII Limpio)</span>
+                <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">FAT32 SAFE</span>
+              </div>
+              <p class="text-zinc-400 text-[11px] mt-0.5">
+                Elimina tildes, <code class="font-mono">ñ</code>, emojis y símbolos raros para que las pantallas matriciales no muestren caracteres rotos.
+              </p>
+            </div>
+          </label>
+
+          <!-- Concurrencia controlada (1 a 5) -->
+          <div class="px-3 py-2 rounded-xl bg-cockpit-panel border border-cockpit-border flex items-center justify-between">
+            <label for="concurrency-range" class="text-zinc-300 font-medium">
+              Descargas simultáneas:
+              <span class="font-mono font-bold text-orange-400 ml-1" x-text="exportOptions.concurrency"></span>
+            </label>
+            <input
+              id="concurrency-range"
+              type="range"
+              min="1"
+              max="5"
+              step="1"
+              x-model.number="exportOptions.concurrency"
+              class="w-28"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Card 5: Separación Clara entre "SELECCIÓN ACTUAL" y "COLA DE DESCARGAS ACTIVA" -->
+      <section aria-labelledby="queue-monitor-heading" class="cockpit-card rounded-2xl p-5 flex-1 flex flex-col gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-cockpit-border">
+          <h2 id="queue-monitor-heading" class="text-sm font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+            <i data-lucide="download-cloud" class="w-4 h-4 text-orange-500"></i>
+            <span>3. Centro de Encolado y Descarga Continua</span>
+          </h2>
+          <button
+            type="button"
+            @click="openDestinationFolder()"
+            class="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+          >
+            <i data-lucide="folder-check" class="w-3.5 h-3.5"></i>
+            <span>Abrir Destino</span>
+          </button>
+        </div>
+
+        <!-- BLOQUE A: LO QUE ESTÁS TILDANDO AHORA (SELECCIÓN TEMPORAL) -->
+        <div class="p-3.5 rounded-xl border transition-all space-y-3"
+          :class="queue.length > 0 ? 'bg-orange-950/20 border-orange-500/40' : 'cockpit-inset border-cockpit-border'"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" :class="queue.length > 0 ? 'bg-orange-400' : 'bg-zinc-600'"></span>
+              <h3 class="text-xs font-mono uppercase tracking-wider text-zinc-200 font-bold">
+                A. Lo que estás tildando ahora (<span class="text-orange-400" x-text="queue.length"></span>)
+              </h3>
+            </div>
+            <button
+              type="button"
+              x-show="queue.length > 0"
+              @click="clearQueueSelection()"
+              class="text-[11px] text-zinc-400 hover:text-red-400 transition"
+            >
+              Desmarcar todos
+            </button>
+          </div>
+
+          <!-- Lista compacta de temas tildados pendientes de enviar a la cola -->
+          <div x-show="queue.length > 0" class="space-y-1.5 max-h-[165px] overflow-y-auto pr-1">
+            <template x-for="(qTrack, qIdx) in queue" :key="qTrack.videoId">
+              <div class="px-2.5 py-1.5 rounded-lg bg-cockpit-panel border border-cockpit-border flex items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="font-mono text-[10px] text-orange-400 w-5" x-text="qIdx + 1 + '.'"></span>
+                  <p class="font-medium text-white truncate" x-text="qTrack.artist + ' — ' + qTrack.title"></p>
+                </div>
+                <button
+                  type="button"
+                  @click="removeFromQueue(qTrack.videoId)"
+                  :aria-label="'Quitar ' + qTrack.title + ' de la selección'"
+                  class="text-zinc-500 hover:text-red-400 px-1 font-bold"
+                >
+                  &times;
+                </button>
+              </div>
+            </template>
+          </div>
+
+          <p x-show="queue.length === 0" class="text-xs text-zinc-500">
+            Tildá canciones o usá <strong>"Top 10 / 20 / 30"</strong> en un artista. Al pulsar el botón de abajo se envían a la cola de descarga y los tildes se limpian solos para que busques otra banda.
+          </p>
+
+          <!-- Botón Principal Inequívoco (Siempre habilitado cuando hay tildes, incluso si ya está descargando otra banda) -->
+          <button
+            type="button"
+            @click="startBatchDownload()"
+            :disabled="queue.length === 0"
+            class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-zinc-950 font-bold text-sm shadow-lg shadow-orange-500/20 transition flex items-center justify-center gap-2 disabled:opacity-35"
+          >
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span x-text="downloadSummary.is_running
+              ? 'Sumar ' + queue.length + ' temas a la descarga activa'
+              : 'Agregar ' + queue.length + ' temas a la cola y descargar'"></span>
+          </button>
+        </div>
+
+        <!-- BLOQUE B: COLA DE DESCARGAS ACTIVA EN SEGUNDO PLANO (SSE) -->
+        <div class="flex-1 flex flex-col space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span
+                class="w-2 h-2 rounded-full"
+                :class="downloadSummary.is_running ? 'bg-blue-400 animate-ping' : (downloadItems.length > 0 ? 'bg-emerald-400' : 'bg-zinc-600')"
+              ></span>
+              <h3 class="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">
+                B. Cola de Descargas Activa
+                <span x-show="downloadItems.length > 0" class="text-zinc-400 font-normal" x-text="'(' + downloadSummary.completed + ' listos / ' + downloadSummary.total + ' total)'"></span>
+              </h3>
+            </div>
+
+            <!-- Botones de control de la cola: Limpiar completados (funciona SIEMPRE, sin frenar descargas) y Detener -->
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                x-show="downloadSummary.completed > 0 || downloadSummary.errors > 0"
+                @click="clearCompletedDownloads()"
+                class="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[11px] font-medium text-zinc-200 border border-zinc-700 transition"
+                title="Quita de la lista los temas ya terminados sin interrumpir los que siguen descargando"
+              >
+                Limpiar completados (<span x-text="downloadSummary.completed + downloadSummary.errors"></span>)
+              </button>
+              <button
+                type="button"
+                x-show="downloadSummary.is_running"
+                @click="cancelAllDownloads()"
+                class="px-2.5 py-1 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/40 text-[11px] font-bold transition"
+              >
+                Detener cola
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista en vivo de la cola de descargas -->
+          <div x-show="downloadItems.length > 0" class="space-y-2 max-h-[340px] overflow-y-auto pr-1">
+            <template x-for="dItem in downloadItems" :key="dItem.videoId">
+              <div class="p-3 rounded-xl cockpit-inset space-y-1.5">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-xs font-semibold text-white truncate" x-text="dItem.artist + ' — ' + dItem.title"></p>
+                    <p
+                      class="text-[11px] font-mono truncate"
+                      :class="{
+                        'text-zinc-400': dItem.status === 'queued',
+                        'text-blue-400': dItem.status === 'downloading',
+                        'text-orange-400': dItem.status === 'processing',
+                        'text-emerald-400': dItem.status === 'completed',
+                        'text-red-400': dItem.status === 'error'
+                      }"
+                      x-text="dItem.status_label"
+                    ></p>
+                  </div>
+
+                  <!-- Porcentaje o Botón Reintentar individual -->
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="font-mono text-xs text-zinc-300" x-text="dItem.progress + '%'"></span>
+                    <button
+                      type="button"
+                      x-show="dItem.status === 'error'"
+                      @click="retrySingleTrack(dItem.videoId)"
+                      class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-500/40 text-[11px] font-semibold transition"
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Barra <progress> por pista -->
+                <progress
+                  max="100"
+                  :value="dItem.progress"
+                  class="w-full h-1.5 block"
+                  :class="{
+                    'progress-blue': dItem.status === 'downloading',
+                    'progress-emerald': dItem.status === 'completed',
+                    'progress-danger': dItem.status === 'error'
+                  }"
+                  :aria-label="'Progreso de ' + dItem.title"
+                ></progress>
+
+                <p x-show="dItem.error_message" class="text-[11px] text-red-300/90 font-mono leading-snug" x-text="dItem.error_message"></p>
+              </div>
+            </template>
+          </div>
+
+          <!-- Empty State de la Cola Activa -->
+          <div
+            x-show="downloadItems.length === 0"
+            class="flex-1 flex flex-col items-center justify-center text-center py-6 px-4 rounded-xl cockpit-inset text-zinc-500"
+          >
+            <i data-lucide="layers" class="w-7 h-7 mb-1.5 text-zinc-600"></i>
+            <p class="text-xs">
+              No hay descargas en curso. Podés ir sumando tandas de distintas bandas y se procesarán en orden.
+            </p>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- FOOTER DE AUTORÍA: BULLAKMUSIC-CONVERTER v1.0 · CREADO POR BULLAK     -->
+  <!-- ===================================================================== -->
+  <footer class="max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 border-t border-cockpit-border/80 text-xs text-zinc-400 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+      <span class="font-mono text-zinc-300 font-semibold">BullakMusic-converter v1.0</span>
+      <span>&middot;</span>
+      <span>
+        Creado por
+        <a
+          href="https://github.com/bullak236"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-orange-400 hover:text-orange-300 font-semibold underline underline-offset-4"
+        >bullak</a>
+      </span>
+    </div>
+
+    <div class="flex items-center flex-wrap gap-4 font-mono text-[11px]">
+      <a
+        href="https://github.com/bullak236/BullakMusic-converter"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-zinc-400 hover:text-white transition flex items-center gap-1.5"
+      >
+        <i data-lucide="git-branch" class="w-3.5 h-3.5 text-orange-400"></i>
+        <span>Repositorio GitHub</span>
+      </a>
+      <a
+        href="https://github.com/bullak236/BullakMusic-converter/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-zinc-400 hover:text-white transition flex items-center gap-1.5"
+      >
+        <i data-lucide="message-square-plus" class="w-3.5 h-3.5 text-blue-400"></i>
+        <span>Reportar Bug / Sugerir Mejora</span>
+      </a>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MINI REPRODUCTOR FLOTANTE INFERIOR (PREVIEW 30s + ATAJO ESPACIO)      -->
+  <!-- ===================================================================== -->
+  <aside
+    aria-label="Reproductor de previsualización de 30 segundos"
+    x-show="preview.videoId"
+    x-cloak
+    class="fixed bottom-0 inset-x-0 z-40 border-t border-cockpit-borderBright bg-[#0c0c12]/95 backdrop-blur-xl shadow-2xl"
+  >
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-4">
+
+      <!-- Info de la pista en preescucha + Ecualizador LED -->
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <div class="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 border border-orange-500/40">
+          <img :src="proxyImage(preview.track?.thumbnail)" :alt="preview.track?.title || 'Preview'" class="w-full h-full object-cover" />
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-500 text-zinc-950">
+              PREVIEW 30s
+            </span>
+            <p class="text-sm font-bold text-white truncate" x-text="preview.track?.title"></p>
+          </div>
+          <p class="text-xs text-zinc-400 truncate" x-text="preview.track?.artist"></p>
+        </div>
+
+        <!-- Mini Ecualizador Animado -->
+        <div x-show="preview.isPlaying" class="hidden sm:flex items-end gap-0.5 h-4 ml-2" aria-hidden="true">
+          <span class="w-1 h-4 bg-orange-500 rounded-full eq-bar-1"></span>
+          <span class="w-1 h-4 bg-orange-400 rounded-full eq-bar-2"></span>
+          <span class="w-1 h-4 bg-amber-400 rounded-full eq-bar-3"></span>
+          <span class="w-1 h-4 bg-orange-500 rounded-full eq-bar-4"></span>
+        </div>
+      </div>
+
+      <!-- Controles Play/Pause + Barra de 30 segundos -->
+      <div class="flex items-center gap-3 flex-1 max-w-md">
+        <button
+          type="button"
+          @click="toggleCurrentPreviewPlay()"
+          class="w-9 h-9 rounded-full bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold flex items-center justify-center shrink-0 transition"
+          :aria-label="preview.isPlaying ? 'Pausar preview (Barra espaciadora)' : 'Reproducir preview (Barra espaciadora)'"
+        >
+          <span x-show="!preview.isPlaying">&#9654;</span>
+          <span x-show="preview.isPlaying">&#10074;&#10074;</span>
+        </button>
+
+        <div class="flex-1 space-y-1">
+          <progress
+            max="30"
+            :value="Math.min(30, preview.currentTime)"
+            class="w-full h-2 block"
+            aria-label="Progreso de previsualización de 30 segundos"
+          ></progress>
+          <div class="flex justify-between text-[10px] font-mono text-zinc-400">
+            <span x-text="preview.isLoading ? 'Conectando stream...' : (Math.floor(preview.currentTime) + 's / 30s')"></span>
+            <span class="hidden sm:inline">Atajo: [Espacio] Play/Pausa</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón rápido para tildar canción en preview + Cerrar player -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          x-show="preview.track"
+          @click="toggleQueueTrack(preview.track)"
+          class="px-3 py-1.5 rounded-lg text-xs font-semibold transition border"
+          :class="isInQueue(preview.videoId)
+            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+            : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-500/40'"
+          x-text="isInQueue(preview.videoId) ? '✓ Tildado' : '+ Tildar tema'"
+        ></button>
+
+        <button
+          type="button"
+          @click="stopPreview()"
+          aria-label="Cerrar reproductor de preescucha"
+          class="p-1.5 rounded-lg text-zinc-400 hover:text-white"
+        >
+          &times;
+        </button>
+      </div>
+    </div>
+
+    <!-- Elemento <audio> nativo conectado al proxy /api/preview/{video_id} -->
+    <audio
+      x-ref="audioPlayer"
+      @timeupdate="onAudioTimeUpdate()"
+      @playing="preview.isPlaying = true; preview.isLoading = false"
+      @pause="preview.isPlaying = false"
+      @ended="stopPreview()"
+      @error="onAudioError()"
+      preload="none"
+    ></audio>
+  </aside>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL NATIVO <dialog>: ESTADO DEL SISTEMA, MANTENIMIENTO Y ACERCA DE  -->
+  <!-- ===================================================================== -->
+  <dialog
+    id="system-status-dialog"
+    x-ref="systemDialog"
+    closedby="any"
+    aria-labelledby="system-dialog-title"
+    class="w-full max-w-lg rounded-2xl cockpit-card text-white p-0 border border-cockpit-borderBright"
+  >
+    <div class="p-6 space-y-5">
+      <div class="flex items-center justify-between border-b border-cockpit-border pb-3">
+        <h1 id="system-dialog-title" class="text-base font-bold flex items-center gap-2">
+          <i data-lucide="cpu" class="w-5 h-5 text-orange-500"></i>
+          <span>Estado del Sistema y Mantenimiento</span>
+        </h1>
+        <form method="dialog">
+          <button
+            value="close"
+            autofocus
+            aria-label="Cerrar diagnóstico del sistema"
+            class="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-mono text-zinc-300"
+          >
+            ESC
+          </button>
+        </form>
+      </div>
+
+      <!-- Diagnóstico de FFmpeg -->
+      <div class="p-4 rounded-xl cockpit-inset space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono uppercase text-zinc-400">Motor de Audio FFmpeg</span>
+          <span
+            class="px-2 py-0.5 rounded text-xs font-mono font-bold"
+            :class="systemStatus.ffmpeg_installed ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'"
+            x-text="systemStatus.ffmpeg_installed ? 'INSTALADO' : 'NO DETECTADO'"
+          ></span>
+        </div>
+        <p x-show="systemStatus.ffmpeg_installed" class="text-xs font-mono text-zinc-400 truncate" x-text="systemStatus.ffmpeg_version"></p>
+
+        <!-- Guía clara si falta FFmpeg -->
+        <div x-show="!systemStatus.ffmpeg_installed" class="space-y-2 pt-1">
+          <p class="text-xs text-amber-200 leading-relaxed">
+            FFmpeg es necesario para convertir el audio a <strong>MP3 CBR 44100 Hz</strong> y normalizar el volumen para el estéreo. Instalalo ejecutando en tu terminal:
+          </p>
+          <div class="p-2.5 rounded-lg bg-black border border-zinc-800 font-mono text-xs text-orange-400 flex items-center justify-between">
+            <code x-text="systemStatus.ffmpeg_install_hint || 'winget install Gyan.FFmpeg'"></code>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagnóstico y Actualización de yt-dlp -->
+      <div class="p-4 rounded-xl cockpit-inset space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-xs font-mono uppercase text-zinc-400 block">Motor de Descarga (yt-dlp)</span>
+            <span class="text-sm font-mono font-bold text-white" x-text="'Versión actual: ' + (systemStatus.ytdlp_version || '...')"></span>
+          </div>
+          <button
+            type="button"
+            @click="updateYtdlp()"
+            :disabled="isUpdatingYtdlp"
+            class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold text-xs transition disabled:opacity-50"
+          >
+            <span x-text="isUpdatingYtdlp ? 'Actualizando...' : 'Actualizar motor (yt-dlp)'"></span>
+          </button>
+        </div>
+        <p class="text-xs text-zinc-400">
+          Si YouTube cambia sus algoritmos y alguna descarga falla, presioná este botón para actualizar <code class="font-mono">yt-dlp</code> automáticamente en el entorno virtual.
+        </p>
+        <pre
+          x-show="ytdlpUpdateLog"
+          class="p-2.5 rounded-lg bg-black text-[11px] font-mono text-emerald-300 overflow-x-auto max-h-28"
+          x-text="ytdlpUpdateLog"
+        ></pre>
+      </div>
+
+      <!-- Bloque Compacto: Acerca de BullakMusic-converter -->
+      <div class="p-4 rounded-xl bg-gradient-to-r from-orange-950/30 via-zinc-900/90 to-zinc-900/80 border border-orange-500/30 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#0c0c10] border border-orange-500/50 flex items-center justify-center shrink-0">
+            <svg role="img" aria-label="BullakMusic Icon" class="w-6 h-6" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 16h14c5.5 0 9.5 3.2 9.5 8 0 3.4-2 6-5.2 7 4 1 6.7 3.9 6.7 8 0 5.5-4.5 9-10.5 9H16V16zm7.5 12.5h5c2.2 0 3.8-1.3 3.8-3.3 0-2-1.6-3.2-3.8-3.2h-5v6.5zm0 13.5h5.8c2.6 0 4.3-1.4 4.3-3.7 0-2.2-1.7-3.6-4.3-3.6h-5.8V42z" fill="#ffffff"/>
+              <rect x="44.5" y="25" width="3.5" height="14" rx="1.75" fill="#f97316"/>
+              <rect x="50.5" y="19" width="3.5" height="26" rx="1.75" fill="#fb923c"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-white">BullakMusic-converter</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-orange-500/20 text-orange-300 border border-orange-500/30">v1.0</span>
+            </div>
+            <p class="text-xs text-zinc-400">
+              Desarrollado por <a href="https://github.com/bullak236" target="_blank" rel="noopener noreferrer" class="text-orange-400 hover:underline font-semibold">bullak</a> &bull; Tag ID3v2.3 <code class="font-mono text-[11px]">TSSE</code> activo
+            </p>
+          </div>
+        </div>
+        <a
+          href="https://github.com/bullak236/BullakMusic-converter"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-mono text-zinc-200 border border-zinc-700 transition shrink-0"
+        >
+          GitHub &rarr;
+        </a>
+      </div>
+
+      <div class="flex justify-end pt-1">
+        <form method="dialog">
+          <button value="ok" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-white">
+            Cerrar ventana
+          </button>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ===================================================================== -->
+  <!-- LÓGICA DE APLICACIÓN ALPINE.JS                                        -->
+  <!-- ===================================================================== -->
+  <script>
+    function bullakMusicApp() {
+      return {
+        activeTab: 'songs',           // 'songs' | 'artists' | 'mix'
+        activeViewMode: 'tracks',     // 'tracks' | 'artists'
+        searchQuery: '',
+        isLoadingSearch: false,
+        liveAnnouncement: '',
+
+        // Resultados y navegación
+        rawTracks: [],
+        displayedTracks: [],
+        artistResults: [],
+        currentArtistProfile: null,
+        artistTopCustomN: 25,
+        resultsTitle: 'Explorador de Canciones',
+        resultsSubtitle: 'Buscá temas o generá un Mix optimizado para tu pendrive.',
+        navigationContext: {
+          canGoBack: false,
+          previousTracks: [],
+          previousTitle: '',
+          previousSubtitle: '',
+          previousViewMode: 'tracks'
+        },
+
+        // Generador de Mix
+        mixSeeds: ['Attaque 77', 'Soda Stereo', 'Queen'],
+        newSeedInput: '',
+        mixTotalCount: 30,
+
+        // Filtros automáticos independientes
+        filters: {
+          antiLongTracks: true,
+          maxDurationMins: 8,
+          excludeKaraoke: true,
+          excludeLive: false,
+          excludeRemix: false,
+          excludeCover: false
+        },
+
+        // Unidades USB y carpeta destino
+        drives: [],
+        selectedDir: '',
+        folderInfo: {
+          label: 'Cargando...',
+          fstype: 'FAT32',
+          free_gb: 0,
+          total_gb: 0,
+          car_warning: null
+        },
+        existingMp3Count: 0,
+        isPickingFolder: false,
+
+        // Selección temporal actual (Lo que estás tildando ahora)
+        queue: [],
+        exportOptions: {
+          bitrate: 192,
+          normalize: true,
+          ascii_mode: true,
+          organization: 'flat',
+          concurrency: 3
+        },
+
+        // Cola de descargas activa en segundo plano (SSE)
+        downloadItems: [],
+        downloadSummary: {
+          total: 0,
+          completed: 0,
+          errors: 0,
+          queued: 0,
+          in_progress: 0,
+          active: 0,
+          is_running: false
+        },
+        sseSource: null,
+
+        // Previsualización de 30s
+        preview: {
+          videoId: null,
+          track: null,
+          isPlaying: false,
+          isLoading: false,
+          currentTime: 0
+        },
+
+        // Estado del sistema
+        systemStatus: {
+          ffmpeg_installed: true,
+          ffmpeg_version: '',
+          ffmpeg_install_hint: 'winget install Gyan.FFmpeg',
+          ytdlp_version: ''
+        },
+        isUpdatingYtdlp: false,
+        ytdlpUpdateLog: '',
+
+        async initApp() {
+          this.refreshIcons();
+          this.setupDialogLightDismissFallback();
+          await Promise.all([
+            this.fetchSystemStatus(),
+            this.refreshDrives()
+          ]);
+          this.connectSSE();
+        },
+
+        refreshIcons() {
+          this.$nextTick(() => {
+            if (window.lucide) {
+              window.lucide.createIcons();
+            }
+          });
+        },
+
+        announce(msg) {
+          this.liveAnnouncement = msg;
+        },
+
+        proxyImage(url) {
+          if (!url) return 'https://placehold.co/120x120/181820/f97316?text=BM';
+          if (url.startsWith('/api/image-proxy')) return url;
+          return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+        },
+
+        setupDialogLightDismissFallback() {
+          if (!('closedBy' in HTMLDialogElement.prototype)) {
+            const outside = (e, dialog) => {
+              const r = dialog.getBoundingClientRect();
+              return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+            };
+            for (const dialog of document.querySelectorAll('dialog[closedby="any"]')) {
+              let pressedOutside = false;
+              dialog.addEventListener('pointerdown', (e) => { pressedOutside = outside(e, dialog); });
+              dialog.addEventListener('pointerup', (e) => { if (pressedOutside && outside(e, dialog)) dialog.close(); });
+            }
+          }
+        },
+
+        async fetchSystemStatus() {
+          try {
+            const res = await fetch('/api/system/status');
+            if (res.ok) {
+              this.systemStatus = await res.json();
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        },
+
+        openSystemModal() {
+          const dlg = this.$refs.systemDialog;
+          if (dlg && typeof dlg.showModal === 'function') {
+            dlg.showModal();
+          }
+        },
+
+        async updateYtdlp() {
+          this.isUpdatingYtdlp = true;
+          this.ytdlpUpdateLog = 'Actualizando yt-dlp en el entorno virtual...';
+          try {
+            const res = await fetch('/api/system/update-ytdlp', { method: 'POST' });
+            const data = await res.json();
+            this.systemStatus.ytdlp_version = data.version;
+            this.ytdlpUpdateLog = data.success
+              ? `¡Actualizado correctamente a yt-dlp ${data.version}!\n${data.output}`
+              : `Aviso: ${data.output}`;
+            this.announce(`Motor yt-dlp actualizado a la versión ${data.version}`);
+          } catch (e) {
+            this.ytdlpUpdateLog = 'Error al actualizar yt-dlp: ' + e.message;
+          } finally {
+            this.isUpdatingYtdlp = false;
+          }
+        },
+
+        async refreshDrives(customDir = '') {
+          try {
+            const target = customDir || this.selectedDir || '';
+            const res = await fetch(`/api/drives?target_dir=${encodeURIComponent(target)}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            this.drives = data.drives || [];
+            this.selectedDir = data.selected_dir || '';
+            this.folderInfo = data.folder_info || {};
+            this.existingMp3Count = data.existing_mp3_count || 0;
+            this.refreshIcons();
+          } catch (e) {
+            console.error('Error al listar unidades:', e);
+          }
+        },
+
+        async selectDrive(mountpoint) {
+          this.selectedDir = mountpoint;
+          await this.refreshDrives(mountpoint);
+          if (this.searchQuery.trim() && this.activeTab === 'songs') {
+            await this.performSearch();
+          }
+        },
+
+        async pickNativeFolder() {
+          this.isPickingFolder = true;
+          try {
+            const res = await fetch('/api/drives/pick-folder', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: this.selectedDir })
+            });
+            const data = await res.json();
+            if (data.selected && data.path) {
+              this.selectedDir = data.path;
+              this.folderInfo = data.folder_info;
+              this.existingMp3Count = data.existing_mp3_count || 0;
+              this.announce('Carpeta destino actualizada: ' + data.path);
+            }
+          } catch (e) {
+            console.error(e);
+          } finally {
+            this.isPickingFolder = false;
+          }
+        },
+
+        async openDestinationFolder() {
+          if (!this.selectedDir) return;
+          await fetch('/api/drives/open-folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: this.selectedDir })
+          });
+        },
+
+        switchTab(tab) {
+          this.activeTab = tab;
+          this.currentArtistProfile = null;
+          this.navigationContext.canGoBack = false;
+          if (tab === 'artists') {
+            this.activeViewMode = 'artists';
+            if (this.searchQuery.trim()) {
+              this.performSearch();
+            }
+          } else {
+            this.activeViewMode = 'tracks';
+          }
+          this.refreshIcons();
+        },
+
+        quickSearch(q) {
+          this.activeTab = 'songs';
+          this.activeViewMode = 'tracks';
+          this.searchQuery = q;
+          this.performSearch();
+        },
+
+        quickArtistSearch(q) {
+          this.activeTab = 'artists';
+          this.activeViewMode = 'artists';
+          this.searchQuery = q;
+          this.performSearch();
+        },
+
+        get effectiveMaxDuration() {
+          return this.filters.antiLongTracks ? this.filters.maxDurationMins : 0;
+        },
+
+        buildFilterQueryParams(extra = {}) {
+          return new URLSearchParams({
+            max_duration_mins: String(this.effectiveMaxDuration),
+            exclude_karaoke: String(this.filters.excludeKaraoke),
+            exclude_live: String(this.filters.excludeLive),
+            exclude_remix: String(this.filters.excludeRemix),
+            exclude_cover: String(this.filters.excludeCover),
+            target_dir: this.selectedDir,
+            ...extra
+          });
+        },
+
+        async performSearch() {
+          const q = this.searchQuery.trim();
+          if (!q) return;
+
+          this.isLoadingSearch = true;
+          this.currentArtistProfile = null;
+          this.navigationContext.canGoBack = false;
+
+          try {
+            const mode = this.activeTab === 'artists' ? 'artists' : 'songs';
+            const params = this.buildFilterQueryParams({ q, mode });
+            const res = await fetch(`/api/search?${params.toString()}`);
+            const data = await res.json();
+
+            if (mode === 'artists') {
+              this.activeViewMode = 'artists';
+              this.artistResults = data.artists || [];
+              this.displayedTracks = [];
+              this.resultsTitle = `Artistas encontrados para "${q}"`;
+              this.resultsSubtitle = 'Hacé clic en un artista para cargar su Top 60 de canciones populares y sus álbumes.';
+              this.announce(`Se encontraron ${this.artistResults.length} artistas.`);
+            } else {
+              this.activeViewMode = 'tracks';
+              this.rawTracks = data.tracks || [];
+              this.displayedTracks = this.rawTracks;
+              this.resultsTitle = `Resultados para "${q}"`;
+              this.resultsSubtitle = 'Búsqueda combinada (Canciones + Videos Musicales). Tildá lo que quieras sumar a la cola.';
+              this.announce(`Se encontraron ${this.displayedTracks.length} resultados.`);
+            }
+          } catch (e) {
+            console.error(e);
+          } finally {
+            this.isLoadingSearch = false;
+            this.refreshIcons();
+          }
+        },
+
+        reapplyFiltersOrSearch() {
+          if (this.rawTracks.length > 0 && !this.searchQuery.trim()) {
+            this.filterLocalRawTracks();
+          } else if (this.currentArtistProfile && this.currentArtistProfile.browseId) {
+            this.openArtistProfile({ browseId: this.currentArtistProfile.browseId, name: this.currentArtistProfile.name }, false);
+          } else if (this.activeTab === 'songs' && this.searchQuery.trim()) {
+            this.performSearch();
+          } else if (this.rawTracks.length > 0) {
+            this.filterLocalRawTracks();
+          }
+        },
+
+        filterLocalRawTracks() {
+          const maxSec = this.effectiveMaxDuration > 0 ? this.effectiveMaxDuration * 60 : 0;
+          this.displayedTracks = this.rawTracks.filter(t => {
+            if (maxSec > 0 && t.duration_seconds > maxSec) return false;
+            if (this.filters.excludeKaraoke && t.is_karaoke) return false;
+            if (this.filters.excludeLive && t.is_live) return false;
+            if (this.filters.excludeRemix && t.is_remix) return false;
+            if (this.filters.excludeCover && t.is_cover) return false;
+            return true;
+          });
+        },
+
+        saveNavigationSnapshot() {
+          this.navigationContext = {
+            canGoBack: true,
+            previousTracks: [...this.displayedTracks],
+            previousTitle: this.resultsTitle,
+            previousSubtitle: this.resultsSubtitle,
+            previousViewMode: this.activeViewMode
+          };
+        },
+
+        goBackFromContext() {
+          this.displayedTracks = this.navigationContext.previousTracks;
+          this.resultsTitle = this.navigationContext.previousTitle;
+          this.resultsSubtitle = this.navigationContext.previousSubtitle;
+          this.activeViewMode = this.navigationContext.previousViewMode;
+          this.currentArtistProfile = null;
+          this.navigationContext.canGoBack = false;
+          this.refreshIcons();
+        },
+
+        async openArtistProfile(artist, saveNav = true) {
+          if (saveNav) {
+            this.saveNavigationSnapshot();
+          }
+          this.isLoadingSearch = true;
+          try {
+            const params = this.buildFilterQueryParams();
+            const res = await fetch(`/api/artist/${encodeURIComponent(artist.browseId)}?${params.toString()}`);
+            const data = await res.json();
+            this.currentArtistProfile = data;
+            this.activeViewMode = 'tracks';
+            this.rawTracks = data.top_songs || [];
+            this.displayedTracks = this.rawTracks;
+            this.resultsTitle = `Top Populares de ${data.name}`;
+            this.resultsSubtitle = 'Usá "Top 10 / 20 / 30" arriba para tildar rápido los más conocidos o elegí un álbum.';
+          } catch (e) {
+            console.error(e);
+          } finally {
+            this.isLoadingSearch = false;
+            this.refreshIcons();
+          }
+        },
+
+        restoreArtistTopSongs() {
+          if (!this.currentArtistProfile) return;
+          this.rawTracks = this.currentArtistProfile.top_songs || [];
+          this.filterLocalRawTracks();
+          this.resultsTitle = `Top Populares de ${this.currentArtistProfile.name}`;
+          this.resultsSubtitle = 'Usá "Top 10 / 20 / 30" arriba para tildar rápido los más conocidos o elegí un álbum.';
+        },
+
+        selectTopNTracks(n) {
+          const targetCount = Math.max(1, Number(n) || 10);
+          // Primero quitar de la selección temporal actual los temas de esta vista para re-aplicar prolijo el Top N
+          const visibleIds = new Set(this.displayedTracks.map(t => t.videoId));
+          this.queue = this.queue.filter(t => !visibleIds.has(t.videoId));
+
+          let selected = 0;
+          for (const track of this.displayedTracks) {
+            if (selected >= targetCount) break;
+            if (track.already_in_dest) continue;
+            if (this.isTrackInActiveDownloads(track.videoId)) continue;
+            if (!this.isInQueue(track.videoId)) {
+              this.queue.push({ ...track });
+              selected++;
+            }
+          }
+          this.announce(`Se tildaron los primeros ${selected} temas populares disponibles.`);
+        },
+
+        async openAlbumTracks(alb) {
+          this.isLoadingSearch = true;
+          try {
+            const params = this.buildFilterQueryParams();
+            const res = await fetch(`/api/album/${encodeURIComponent(alb.browseId)}?${params.toString()}`);
+            const data = await res.json();
+            this.activeViewMode = 'tracks';
+            this.rawTracks = data.tracks || [];
+            this.displayedTracks = this.rawTracks;
+            this.resultsTitle = `Álbum: ${data.title} (${data.artist})`;
+            this.resultsSubtitle = `${this.displayedTracks.length} pistas del álbum listas para tildar.`;
+          } catch (e) {
+            console.error(e);
+          } finally {
+            this.isLoadingSearch = false;
+            this.refreshIcons();
+          }
+        },
+
+        async discoverSimilarSongs(track) {
+          this.saveNavigationSnapshot();
+          this.isLoadingSearch = true;
+          try {
+            const params = this.buildFilterQueryParams();
+            const res = await fetch(`/api/similar/${encodeURIComponent(track.videoId)}?${params.toString()}`);
+            const data = await res.json();
+            this.currentArtistProfile = null;
+            this.activeViewMode = 'tracks';
+            this.rawTracks = data.tracks || [];
+            this.displayedTracks = this.rawTracks;
+            this.resultsTitle = `Similares a "${track.title}"`;
+            this.resultsSubtitle = `Radio del mismo estilo basada en ${track.artist}.`;
+            this.announce(`Mostrando ${this.displayedTracks.length} canciones similares a ${track.title}.`);
+          } catch (e) {
+            console.error(e);
+          } finally {
+            this.isLoadingSearch = false;
+            this.refreshIcons();
+          }
+        },
+
+        // Generador de Mix
+        addMixSeed() {
+          const val = this.newSeedInput.trim();
+          if (!val || this.mixSeeds.length >= 5) return;
+          if (!this.mixSeeds.includes(val)) {
+            this.mixSeeds.push(val);
+          }
+          this.newSeedInput = '';
+        },
+
+        removeMixSeed(idx) {
+          this.mixSeeds.splice(idx, 1);
+        },
+
+        loadMixPreset(seedsArray) {
+          this.mixSeeds = [...seedsArray];
+          this.generateMix();
+        },
+
+        async generateMix() {
+          if (this.newSeedInput.trim() && this.mixSeeds.length < 5) {
+            this.addMixSeed();
+          }
+          if (this.mixSeeds.length === 0) return;
+
+          this.isLoadingSearch = true;
+          this.currentArtistProfile = null;
+          this.activeViewMode = 'tracks';
+
+          try {
+            const res = await fetch('/api/mix/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                seeds: this.mixSeeds,
+                total_count: this.mixTotalCount,
+                max_duration_mins: this.effectiveMaxDuration,
+                exclude_karaoke: this.filters.excludeKaraoke,
+                exclude_live: this.filters.excludeLive,
+                exclude_remix: this.filters.excludeRemix,
+                exclude_cover: this.filters.excludeCover,
+                target_dir: this.selectedDir
+              })
+            });
+            const data = await res.json();
+            this.rawTracks = data.tracks || [];
+            this.displayedTracks = this.rawTracks;
+            this.resultsTitle = `Mix Generado (${this.displayedTracks.length} canciones)`;
+            this.resultsSubtitle = `Combinación balanceada de: ${this.mixSeeds.join(', ')}`;
+            this.announce(`Mix generado con ${this.displayedTracks.length} canciones.`);
+          } catch (e) {
+            console.error(e);
+          } finally {
+            this.isLoadingSearch = false;
+            this.refreshIcons();
+          }
+        },
+
+        // Estado de cada pista respecto a la selección actual y la cola de descargas activa
+        isInQueue(videoId) {
+          return this.queue.some(t => t.videoId === videoId);
+        },
+
+        isTrackInActiveDownloads(videoId) {
+          return this.downloadItems.some(
+            d => d.videoId === videoId && (d.status === 'queued' || d.status === 'downloading' || d.status === 'processing' || d.status === 'completed')
+          );
+        },
+
+        getTrackSessionStatus(videoId) {
+          const found = this.downloadItems.find(d => d.videoId === videoId);
+          if (!found) return null;
+          if (found.status === 'completed') return 'completed';
+          if (found.status === 'queued' || found.status === 'downloading' || found.status === 'processing') return 'active';
+          return found.status;
+        },
+
+        toggleQueueTrack(track) {
+          if (!track || !track.videoId) return;
+          const idx = this.queue.findIndex(t => t.videoId === track.videoId);
+          if (idx >= 0) {
+            this.queue.splice(idx, 1);
+          } else {
+            this.queue.push({ ...track });
+          }
+        },
+
+        removeFromQueue(videoId) {
+          this.queue = this.queue.filter(t => t.videoId !== videoId);
+        },
+
+        addAllVisibleToQueue(skipDuplicates = true) {
+          let added = 0;
+          for (const t of this.displayedTracks) {
+            if (skipDuplicates && (t.already_in_dest || this.isTrackInActiveDownloads(t.videoId))) continue;
+            if (!this.isInQueue(t.videoId)) {
+              this.queue.push({ ...t });
+              added++;
+            }
+          }
+          this.announce(`${added} canciones tildadas listas para agregar a la cola.`);
+        },
+
+        deselectVisibleFromQueue() {
+          const visibleIds = new Set(this.displayedTracks.map(t => t.videoId));
+          this.queue = this.queue.filter(t => !visibleIds.has(t.videoId));
+        },
+
+        clearQueueSelection() {
+          this.queue = [];
+        },
+
+        get totalQueueSeconds() {
+          const stagedSec = this.queue.reduce((acc, t) => acc + (Number(t.duration_seconds) || 210), 0);
+          const activeSec = this.downloadItems
+            .filter(d => d.status !== 'completed' && d.status !== 'error')
+            .reduce((acc, d) => acc + (Number(d.duration_seconds) || 210), 0);
+          return stagedSec + activeSec;
+        },
+
+        get totalQueueDurationFormatted() {
+          const stagedSec = this.queue.reduce((acc, t) => acc + (Number(t.duration_seconds) || 210), 0);
+          const hrs = Math.floor(stagedSec / 3600);
+          const mins = Math.floor((stagedSec % 3600) / 60);
+          if (hrs > 0) return `${hrs}h ${mins}m`;
+          return `${mins} min`;
+        },
+
+        get estimatedQueueMB() {
+          const bitrate = Number(this.exportOptions.bitrate) || 192;
+          const totalCount = this.queue.length + this.downloadItems.filter(d => d.status !== 'completed' && d.status !== 'error').length;
+          const audioMB = (this.totalQueueSeconds * bitrate) / 8 / 1024;
+          const coversMB = totalCount * 0.075;
+          return audioMB + coversMB;
+        },
+
+        get capacityPercent() {
+          const freeMB = (Number(this.folderInfo.free_gb) || 0) * 1024;
+          if (freeMB <= 0) return 0;
+          return Math.min(100, Math.max(1, (this.estimatedQueueMB / freeMB) * 100));
+        },
+
+        // Previsualización de 30s (con soporte de barra espaciadora)
+        togglePreview(track) {
+          const audio = this.$refs.audioPlayer;
+          if (!audio || !track) return;
+
+          if (this.preview.videoId === track.videoId) {
+            this.toggleCurrentPreviewPlay();
+            return;
+          }
+
+          audio.pause();
+          this.preview.videoId = track.videoId;
+          this.preview.track = track;
+          this.preview.currentTime = 0;
+          this.preview.isLoading = true;
+          this.preview.isPlaying = false;
+
+          audio.src = `/api/preview/${encodeURIComponent(track.videoId)}`;
+          audio.currentTime = 0;
+          audio.play().catch(() => {
+            this.preview.isLoading = false;
+            this.preview.isPlaying = false;
+          });
+        },
+
+        toggleCurrentPreviewPlay() {
+          const audio = this.$refs.audioPlayer;
+          if (!audio || !this.preview.videoId) return;
+          if (audio.paused) {
+            audio.play().catch(() => {});
+          } else {
+            audio.pause();
+          }
+        },
+
+        stopPreview() {
+          const audio = this.$refs.audioPlayer;
+          if (audio) {
+            audio.pause();
+            audio.removeAttribute('src');
+            audio.load();
+          }
+          this.preview.videoId = null;
+          this.preview.track = null;
+          this.preview.isPlaying = false;
+          this.preview.isLoading = false;
+          this.preview.currentTime = 0;
+        },
+
+        onAudioTimeUpdate() {
+          const audio = this.$refs.audioPlayer;
+          if (!audio) return;
+          this.preview.currentTime = audio.currentTime || 0;
+          if (this.preview.currentTime >= 30) {
+            this.stopPreview();
+          }
+        },
+
+        onAudioError() {
+          this.preview.isLoading = false;
+          this.preview.isPlaying = false;
+        },
+
+        handleGlobalSpace(event) {
+          const tag = (event.target?.tagName || '').toLowerCase();
+          if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button' || event.target?.isContentEditable) {
+            return;
+          }
+          if (this.preview.videoId) {
+            event.preventDefault();
+            this.toggleCurrentPreviewPlay();
+          }
+        },
+
+        // Descarga continua en lote y conexión SSE en tiempo real
+        connectSSE() {
+          if (this.sseSource) {
+            this.sseSource.close();
+          }
+          const es = new EventSource('/api/downloads/stream');
+          this.sseSource = es;
+
+          es.addEventListener('snapshot', (e) => {
+            try {
+              const data = JSON.parse(e.data);
+              this.downloadItems = (data.items || []).slice().reverse();
+              this.downloadSummary = data.summary || this.downloadSummary;
+            } catch (err) {}
+          });
+
+          es.addEventListener('track_update', (e) => {
+            try {
+              const data = JSON.parse(e.data);
+              const updated = data.item;
+              if (updated) {
+                const idx = this.downloadItems.findIndex(i => i.videoId === updated.videoId);
+                if (idx >= 0) {
+                  this.downloadItems.splice(idx, 1, updated);
+                } else {
+                  this.downloadItems.unshift(updated);
+                }
+                if (updated.status === 'completed') {
+                  for (const t of this.displayedTracks) {
+                    if (t.videoId === updated.videoId) {
+                      t.already_in_dest = true;
+                    }
+                  }
+                }
+              }
+              if (data.summary) {
+                const wasRunning = this.downloadSummary.is_running;
+                this.downloadSummary = data.summary;
+                if (wasRunning && !data.summary.is_running) {
+                  this.refreshDrives(this.selectedDir);
+                  this.announce(`Cola completada: ${data.summary.completed} canciones grabadas en destino.`);
+                }
+              }
+            } catch (err) {}
+          });
+        },
+
+        async startBatchDownload() {
+          if (this.queue.length === 0) return;
+          if (!this.systemStatus.ffmpeg_installed) {
+            this.openSystemModal();
+            return;
+          }
+
+          const tracksToSend = [...this.queue];
+          try {
+            const payload = {
+              tracks: tracksToSend.map(t => ({
+                videoId: t.videoId,
+                title: t.title,
+                artist: t.artist,
+                album: t.album || 'BullakMusic',
+                duration: t.duration || '3:30',
+                duration_seconds: Number(t.duration_seconds) || 210,
+                thumbnail: t.thumbnail || ''
+              })),
+              output_dir: this.selectedDir,
+              bitrate: Number(this.exportOptions.bitrate) || 192,
+              normalize: Boolean(this.exportOptions.normalize),
+              ascii_mode: Boolean(this.exportOptions.ascii_mode),
+              organization: this.exportOptions.organization,
+              concurrency: Number(this.exportOptions.concurrency) || 3
+            };
+
+            const res = await fetch('/api/downloads/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+              const snap = await res.json();
+              this.downloadItems = (snap.items || []).slice().reverse();
+              this.downloadSummary = snap.summary || this.downloadSummary;
+              // Limpiar automáticamente los checkboxes de la selección temporal
+              // para que el usuario pueda buscar y tildar otra banda de inmediato
+              this.queue = [];
+              this.announce(`Se sumaron ${tracksToSend.length} canciones a la cola de descargas activa.`);
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        },
+
+        async retrySingleTrack(videoId) {
+          await fetch(`/api/downloads/retry/${encodeURIComponent(videoId)}`, { method: 'POST' });
+        },
+
+        async cancelAllDownloads() {
+          await fetch('/api/downloads/cancel', { method: 'POST' });
+        },
+
+        async clearCompletedDownloads() {
+          const res = await fetch('/api/downloads/clear', { method: 'POST' });
+          if (res.ok) {
+            const snap = await res.json();
+            this.downloadItems = (snap.items || []).slice().reverse();
+            this.downloadSummary = snap.summary || this.downloadSummary;
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>

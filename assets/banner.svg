@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="100%" height="100%" role="img" aria-label="BullakMusic-converter — Car Audio Studio by bullak">
+  <defs>
+    <!-- Cockpit Deep Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#09090b" />
+      <stop offset="50%" stop-color="#0d0d13" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+
+    <!-- Ignition Orange Glow -->
+    <radialGradient id="orangeGlow" cx="18%" cy="45%" r="48%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.22" />
+      <stop offset="55%" stop-color="#f97316" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#09090b" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Telemetry Blue Glow -->
+    <radialGradient id="blueGlow" cx="85%" cy="50%" r="45%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.18" />
+      <stop offset="60%" stop-color="#2563eb" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#09090b" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Metallic Border Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#272732" />
+      <stop offset="25%" stop-color="#f97316" stop-opacity="0.7" />
+      <stop offset="50%" stop-color="#2c2c3a" />
+      <stop offset="80%" stop-color="#3b82f6" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#272732" />
+    </linearGradient>
+
+    <!-- Logo Badge Gradient -->
+    <linearGradient id="logoFrameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <!-- Acoustic Grid Pattern -->
+    <pattern id="gridPattern" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.028" />
+    </pattern>
+  </defs>
+
+  <!-- Base Container -->
+  <rect width="1200" height="320" rx="22" fill="url(#bgGrad)" />
+  <rect width="1200" height="320" rx="22" fill="url(#orangeGlow)" />
+  <rect width="1200" height="320" rx="22" fill="url(#blueGlow)" />
+  <rect width="1200" height="320" rx="22" fill="url(#gridPattern)" />
+
+  <!-- Outer Cockpit Bezel -->
+  <rect x="2" y="2" width="1196" height="316" rx="20" fill="none" stroke="url(#borderGrad)" stroke-width="2" />
+  <rect x="14" y="14" width="1172" height="292" rx="14" fill="none" stroke="#1e1e28" stroke-width="1" />
+
+  <!-- Decorative Hi-Fi Equalizer Telemetry Bars (Right Side) -->
+  <g opacity="0.85" transform="translate(865, 62)">
+    <!-- Telemetry Frame -->
+    <rect x="0" y="0" width="275" height="196" rx="14" fill="#0c0c12" stroke="#232330" stroke-width="1.5" />
+    <text x="18" y="26" fill="#71717a" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="600" letter-spacing="1.5">
+      TELEMETRY // CAR-SAFE DSP
+    </text>
+    <circle cx="252" cy="22" r="4" fill="#10b981" />
+
+    <!-- Spectrum Analyzer Bars -->
+    <g transform="translate(20, 44)">
+      <rect x="0"   y="44" width="10" height="52" rx="3" fill="#f97316" />
+      <rect x="16"  y="24" width="10" height="72" rx="3" fill="#f97316" />
+      <rect x="32"  y="8"  width="10" height="88" rx="3" fill="#fb923c" />
+      <rect x="48"  y="30" width="10" height="66" rx="3" fill="#f97316" />
+      <rect x="64"  y="50" width="10" height="46" rx="3" fill="#ea580c" />
+      <rect x="80"  y="18" width="10" height="78" rx="3" fill="#fb923c" />
+      <rect x="96"  y="4"  width="10" height="92" rx="3" fill="#f97316" />
+      <rect x="112" y="28" width="10" height="68" rx="3" fill="#3b82f6" />
+      <rect x="128" y="42" width="10" height="54" rx="3" fill="#2563eb" />
+      <rect x="144" y="14" width="10" height="82" rx="3" fill="#3b82f6" />
+      <rect x="160" y="34" width="10" height="62" rx="3" fill="#60a5fa" />
+      <rect x="176" y="54" width="10" height="42" rx="3" fill="#2563eb" />
+      <rect x="192" y="22" width="10" height="74" rx="3" fill="#10b981" />
+      <rect x="208" y="38" width="10" height="58" rx="3" fill="#10b981" />
+      <rect x="224" y="48" width="10" height="48" rx="3" fill="#059669" />
+    </g>
+
+    <!-- Bottom Readout Specs inside Telemetry Card -->
+    <line x1="16" y1="154" x2="259" y2="154" stroke="#1e1e28" stroke-width="1" />
+    <text x="18" y="176" fill="#10b981" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700">
+      44.1 kHz CBR
+    </text>
+    <text x="115" y="176" fill="#f97316" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700">
+      -14 LUFS
+    </text>
+    <text x="190" y="176" fill="#38bdf8" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700">
+      FAT32 OK
+    </text>
+  </g>
+
+  <!-- Left Brand Monogram 'B' Icon -->
+  <g transform="translate(58, 86)">
+    <rect x="0" y="0" width="148" height="148" rx="32" fill="url(#logoFrameGrad)" />
+    <rect x="4" y="4" width="140" height="140" rx="28" fill="#0c0c10" />
+    <circle cx="74" cy="74" r="58" stroke="#23232e" stroke-width="2.5" stroke-dasharray="7 5" fill="none" />
+
+    <!-- Monogram 'B' -->
+    <path d="M36 36h32c12.8 0 22 7.4 22 18.6 0 7.9-4.6 13.9-12 16.2 9.3 2.3 15.5 9.1 15.5 18.6 0 12.8-10.4 21-24.4 21H36V36zm17.4 29h11.6c5.1 0 8.8-3 8.8-7.6 0-4.6-3.7-7.4-8.8-7.4H53.4v15zm0 31.4h13.5c6 0 10-3.3 10-8.6 0-5.1-4-8.4-10-8.4H53.4v17z" fill="#ffffff" />
+
+    <!-- Audio Wave Bars next to 'B' -->
+    <rect x="101" y="56" width="7.5" height="36" rx="3.75" fill="#f97316" />
+    <rect x="114" y="42" width="7.5" height="64" rx="3.75" fill="#fb923c" />
+
+    <!-- Active LED Dot -->
+    <circle cx="136" cy="12" r="7" fill="#10b981" stroke="#09090b" stroke-width="4" />
+  </g>
+
+  <!-- Center Title, Subtitle & Feature Pills -->
+  <g transform="translate(236, 102)">
+    <!-- Top Technical Eyebrow -->
+    <rect x="0" y="-18" width="335" height="24" rx="6" fill="#16161f" stroke="#2c2c3a" stroke-width="1" />
+    <circle cx="14" cy="-6" r="3.5" fill="#f97316" />
+    <text x="26" y="-2" fill="#d4d4d8" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="700" letter-spacing="1.8">
+      CONVERTER // CAR AUDIO STUDIO · BY BULLAK
+    </text>
+
+    <!-- Main Brand Heading -->
+    <text x="0" y="56" font-family="'DM Sans', 'Segoe UI', system-ui, sans-serif" font-size="56" font-weight="800" letter-spacing="-1.2">
+      <tspan fill="#ffffff">Bullak</tspan><tspan fill="#f97316">Music</tspan><tspan fill="#71717a" font-size="38" font-weight="600">-converter</tspan>
+    </text>
+
+    <!-- Value Proposition Tagline -->
+    <text x="2" y="92" fill="#a1a1aa" font-family="'DM Sans', 'Segoe UI', system-ui, sans-serif" font-size="17" font-weight="500">
+      Buscador, generador de mix y grabador MP3 en lote 100% optimizado para estéreos de auto
+    </text>
+
+    <!-- Technical Feature Pills -->
+    <g transform="translate(0, 114)">
+      <rect x="0" y="0" width="136" height="28" rx="8" fill="#14141c" stroke="#272732" />
+      <text x="14" y="18" fill="#fb923c" font-family="'JetBrains Mono', Consolas, monospace" font-size="11.5" font-weight="600">
+        ● MP3 CBR 44.1kHz
+      </text>
+
+      <rect x="146" y="0" width="164" height="28" rx="8" fill="#14141c" stroke="#272732" />
+      <text x="160" y="18" fill="#38bdf8" font-family="'JetBrains Mono', Consolas, monospace" font-size="11.5" font-weight="600">
+        ● ID3v2.3 + Cover &lt;100K
+      </text>
+
+      <rect x="320" y="0" width="138" height="28" rx="8" fill="#14141c" stroke="#272732" />
+      <text x="334" y="18" fill="#34d399" font-family="'JetBrains Mono', Consolas, monospace" font-size="11.5" font-weight="600">
+        ● 100% Local &amp; Safe
+      </text>
+
+      <rect x="468" y="0" width="126" height="28" rx="8" fill="#14141c" stroke="#272732" />
+      <text x="482" y="18" fill="#e4e4e7" font-family="'JetBrains Mono', Consolas, monospace" font-size="11.5" font-weight="600">
+        ● USB Auto-Scan
+      </text>
+    </g>
+  </g>
+</svg>

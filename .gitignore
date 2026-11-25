@@ -1,0 +1,63 @@
+# Entornos virtuales de Python
+.venv/
+venv/
+env/
+ENV/
+
+# Carpetas de descargas locales y pruebas
+BullakMusic_Descargas/
+descargas/
+downloads/
+*.mp3
+*.m4a
+*.webm
+*.wav
+*.flac
+
+# Caché y compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Archivos temporales, logs y artefactos de agente/IDE
+tmp/
+temp/
+.cache/
+*.part
+*.ytdl
+*.temp.*
+*.log
+walkthrough.md
+implementation_plan.md
+task.md
+scratch/
+.gemini/
+.agent/
+
+# Archivos de configuración local y sistema operativo
+.env
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
