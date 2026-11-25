@@ -6,6 +6,7 @@ Sirve tanto la API REST / SSE / Audio Stream Proxy como el frontend estático.
 from __future__ import annotations
 
 import asyncio
+from collections import OrderedDict
 import json
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -330,7 +331,7 @@ async def api_generate_mix(req: MixRequest) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Proxy de Imágenes Protegido (Anti-SSRF con Whitelist Oficial de YouTube/Google)
+# Proxy Local de Imágenes con Caché LRU en Memoria + Anti-SSRF
 # ---------------------------------------------------------------------------
 ALLOWED_IMAGE_HOSTS = {
     "i.ytimg.com",
@@ -341,39 +342,106 @@ ALLOWED_IMAGE_HOSTS = {
     "yt3.googleusercontent.com",
     "music.youtube.com",
 }
+ALLOWED_IMAGE_SUFFIXES = (
+    ".googleusercontent.com",
+    ".ytimg.com",
+    ".ggpht.com",
+    ".youtube.com",
+)
+
+# Caché LRU en memoria (~300 imágenes o ~30 MB máximo) para evitar 403/429 y carga instantánea
+_IMAGE_CACHE: OrderedDict[str, tuple[bytes, str]] = OrderedDict()
+_IMAGE_CACHE_BYTES: int = 0
+MAX_IMAGE_CACHE_ITEMS = 300
+MAX_IMAGE_CACHE_BYTES = 30 * 1024 * 1024  # 30 MB
+
+
+def _is_allowed_image_host(hostname: str) -> bool:
+    host = (hostname or "").lower().strip(".")
+    if not host:
+        return False
+    if host in ALLOWED_IMAGE_HOSTS:
+        return True
+    return any(host.endswith(suffix) for suffix in ALLOWED_IMAGE_SUFFIXES)
 
 
 @app.get("/api/image-proxy")
 async def api_image_proxy(url: str = Query(..., min_length=8, max_length=1024)) -> Response:
     """
-    Proxy seguro de miniaturas con protección estricta Anti-SSRF:
-    Valida protocolo HTTPS y lista blanca de dominios oficiales de YouTube/Google.
+    Proxy seguro de miniaturas con protección estricta Anti-SSRF y caché LRU en memoria:
+    - Valida protocolo HTTPS y dominios legítimos de YouTube/Google.
+    - Usa follow_redirects=True y omite Referer para evitar bloqueos ORB/403.
+    - Cachea hasta 300 portadas (~30 MB) con Cache-Control: public, max-age=86400.
     """
-    parsed = urlparse(url.strip())
+    global _IMAGE_CACHE_BYTES
+    clean_url = url.strip()
+    parsed = urlparse(clean_url)
     hostname = (parsed.hostname or "").lower()
-    if parsed.scheme != "https" or hostname not in ALLOWED_IMAGE_HOSTS:
+
+    if parsed.scheme != "https" or not _is_allowed_image_host(hostname):
         raise HTTPException(
             status_code=403,
             detail="Dominio de imagen bloqueado por política Anti-SSRF (solo dominios oficiales de YouTube/Google).",
         )
 
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
+    # 1. Servir desde caché LRU si ya fue descargada
+    cached = _IMAGE_CACHE.get(clean_url)
+    if cached is not None:
+        _IMAGE_CACHE.move_to_end(clean_url)
+        img_bytes, media_type = cached
+        return Response(
+            content=img_bytes,
+            media_type=media_type,
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "X-Cache": "HIT",
+            },
+        )
+
+    # 2. Descargar sin enviar Referer y siguiendo redirecciones
+    req_headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+        ),
+        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    }
+
+    async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
         try:
-            resp = await client.get(url)
+            resp = await client.get(clean_url, headers=req_headers)
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"No se pudo obtener la imagen: {exc}") from exc
 
-    if resp.status_code != 200:
-        raise HTTPException(status_code=resp.status_code, detail="Miniatura no encontrada.")
+    if resp.status_code != 200 or not resp.content:
+        raise HTTPException(status_code=resp.status_code if resp.status_code != 200 else 404, detail="Miniatura no encontrada.")
 
-    content_type = resp.headers.get("content-type", "image/jpeg")
+    content_type = (resp.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
     if not content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="El recurso remoto no es una imagen válida.")
 
+    img_data = resp.content
+    data_len = len(img_data)
+
+    # 3. Guardar en caché LRU respetando límites de 300 ítems y 30 MB
+    if data_len <= 4 * 1024 * 1024:
+        while (
+            len(_IMAGE_CACHE) >= MAX_IMAGE_CACHE_ITEMS
+            or (_IMAGE_CACHE_BYTES + data_len) > MAX_IMAGE_CACHE_BYTES
+        ) and _IMAGE_CACHE:
+            _, (evicted_bytes, _) = _IMAGE_CACHE.popitem(last=False)
+            _IMAGE_CACHE_BYTES = max(0, _IMAGE_CACHE_BYTES - len(evicted_bytes))
+
+        _IMAGE_CACHE[clean_url] = (img_data, content_type)
+        _IMAGE_CACHE_BYTES += data_len
+
     return Response(
-        content=resp.content,
+        content=img_data,
         media_type=content_type,
-        headers={"Cache-Control": "public, max-age=86400"},
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "X-Cache": "MISS",
+        },
     )
 
 

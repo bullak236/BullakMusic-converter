@@ -76,14 +76,19 @@ def format_seconds(seconds: int) -> str:
 
 
 def pick_best_thumbnail(thumbnails: list[dict[str, Any]] | None, video_id: str = "") -> str:
-    """Elige una miniatura de alta calidad para el frontend y el recortador 500x500."""
+    """
+    Elige la miniatura de mejor calidad entregada por ytmusicapi sin alterar
+    parámetros firmados (=w...-h...) de lh3/yt3.googleusercontent.com, y usa
+    https://i.ytimg.com/vi/{video_id}/hqdefault.jpg como fallback seguro.
+    """
     if thumbnails and isinstance(thumbnails, list):
-        best = thumbnails[-1].get("url", "")
-        if best:
-            if "googleusercontent.com" in best and "=w" in best:
-                base = best.split("=w")[0]
-                return f"{base}=w500-h500-l90-rj"
-            return best
+        for item in reversed(thumbnails):
+            if isinstance(item, dict):
+                url = (item.get("url") or "").strip()
+                if url:
+                    if url.startswith("//"):
+                        return f"https:{url}"
+                    return url
     if video_id:
         return f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
     return ""
@@ -167,6 +172,7 @@ def normalize_track_item(
         "duration_seconds": duration_seconds,
         "duration": duration_formatted,
         "thumbnail": thumbnail_url,
+        "thumbnail_url": thumbnail_url,
         "source_type": resolved_source,
         "is_karaoke": flags["is_karaoke"],
         "is_live": flags["is_live"],
@@ -374,6 +380,7 @@ def search_artists(query: str, limit: int = 16) -> list[dict[str, Any]]:
                 "name": name,
                 "subscribers": subscribers,
                 "thumbnail": thumb,
+                "thumbnail_url": thumb,
             }
         )
 
@@ -470,13 +477,15 @@ def get_artist_details(
             if not alb_id or not alb_title or alb_id in seen_albums:
                 continue
             seen_albums.add(alb_id)
+            alb_thumb = pick_best_thumbnail(alb.get("thumbnails") or alb.get("thumbnail")) or thumbnail
             albums.append(
                 {
                     "browseId": alb_id,
                     "title": alb_title,
                     "year": alb.get("year") or label,
                     "type": label,
-                    "thumbnail": pick_best_thumbnail(alb.get("thumbnails")),
+                    "thumbnail": alb_thumb,
+                    "thumbnail_url": alb_thumb,
                 }
             )
 
@@ -486,6 +495,7 @@ def get_artist_details(
         "description": description,
         "subscribers": subscribers,
         "thumbnail": thumbnail,
+        "thumbnail_url": thumbnail,
         "top_songs": filtered_tracks,
         "albums": albums,
     }
@@ -521,6 +531,7 @@ def get_album_tracks(
         if norm:
             if not norm["thumbnail"] and thumbnail:
                 norm["thumbnail"] = thumbnail
+                norm["thumbnail_url"] = thumbnail
             tracks.append(norm)
 
     filtered = apply_track_filters(
@@ -538,6 +549,7 @@ def get_album_tracks(
         "artist": artist_name,
         "year": alb.get("year") or "",
         "thumbnail": thumbnail,
+        "thumbnail_url": thumbnail,
         "tracks": filtered,
     }
 

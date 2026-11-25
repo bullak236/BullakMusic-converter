@@ -744,12 +744,17 @@
               @click="openArtistProfile(artist)"
               class="text-left p-3.5 rounded-xl bg-cockpit-panel hover:bg-cockpit-elevated border border-cockpit-border hover:border-orange-500/50 transition flex items-center gap-3.5 group"
             >
-              <img
-                :src="proxyImage(artist.thumbnail)"
-                :alt="'Foto de ' + artist.name"
-                class="w-14 h-14 rounded-full object-cover border border-zinc-700 group-hover:border-orange-500 transition"
-                loading="lazy"
-              />
+              <div class="w-14 h-14 rounded-full overflow-hidden shrink-0 bg-[#18181f] border border-zinc-700 group-hover:border-orange-500 transition aspect-square">
+                <img
+                  :src="imgProxy(artist.thumbnail_url || artist.thumbnail)"
+                  :alt="artist.name"
+                  @error="handleImageError($event)"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  referrerpolicy="no-referrer"
+                />
+              </div>
               <div class="flex-1 min-w-0">
                 <p class="font-bold text-white truncate group-hover:text-orange-400 transition" x-text="artist.name"></p>
                 <p class="text-xs text-zinc-400 truncate" x-text="artist.subscribers"></p>
@@ -769,11 +774,17 @@
         >
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3.5">
-              <img
-                :src="proxyImage(currentArtistProfile?.thumbnail)"
-                :alt="currentArtistProfile?.name || 'Artista'"
-                class="w-14 h-14 rounded-full object-cover border-2 border-orange-500"
-              />
+              <div class="w-14 h-14 rounded-full overflow-hidden shrink-0 bg-[#18181f] border-2 border-orange-500 aspect-square">
+                <img
+                  :src="imgProxy(currentArtistProfile?.thumbnail_url || currentArtistProfile?.thumbnail)"
+                  :alt="currentArtistProfile?.name || 'Artista'"
+                  @error="handleImageError($event)"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  referrerpolicy="no-referrer"
+                />
+              </div>
               <div>
                 <div class="flex items-center gap-2">
                   <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-orange-500/20 text-orange-300">
@@ -860,15 +871,18 @@
                   @click="openAlbumTracks(alb)"
                   class="shrink-0 w-36 p-2 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-orange-500/50 text-left transition"
                 >
-                  <div class="relative">
+                  <div class="relative w-full aspect-square rounded-lg overflow-hidden mb-1.5 bg-[#18181f] border border-zinc-800/80">
                     <img
-                      :src="proxyImage(alb.thumbnail)"
+                      :src="imgProxy(alb.thumbnail_url || alb.thumbnail)"
                       :alt="alb.title"
-                      class="w-full h-24 object-cover rounded-lg mb-1.5"
+                      @error="handleImageError($event)"
+                      class="w-full h-full object-cover"
                       loading="lazy"
+                      decoding="async"
+                      referrerpolicy="no-referrer"
                     />
                     <span
-                      class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-black/80 text-zinc-200 border border-zinc-700"
+                      class="absolute top-1.5 right-1.5 z-10 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-black/85 text-zinc-200 border border-zinc-700 shadow"
                       x-text="alb.type || 'Álbum'"
                     ></span>
                   </div>
@@ -910,12 +924,15 @@
               </label>
 
               <!-- Portada + Botón Play/Pause de Preview 30s superpuesto -->
-              <div class="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-zinc-900 border border-zinc-800">
+              <div class="relative w-12 h-12 aspect-square rounded-lg overflow-hidden shrink-0 bg-[#18181f] border border-zinc-800">
                 <img
-                  :src="proxyImage(track.thumbnail)"
-                  :alt="'Portada de ' + track.title"
+                  :src="imgProxy(track.thumbnail_url || track.thumbnail)"
+                  :alt="track.title"
+                  @error="handleImageError($event)"
                   class="w-full h-full object-cover"
                   loading="lazy"
+                  decoding="async"
+                  referrerpolicy="no-referrer"
                 />
                 <button
                   type="button"
@@ -1505,8 +1522,16 @@
 
       <!-- Info de la pista en preescucha + Ecualizador LED -->
       <div class="flex items-center gap-3 min-w-0 flex-1">
-        <div class="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 border border-orange-500/40">
-          <img :src="proxyImage(preview.track?.thumbnail)" :alt="preview.track?.title || 'Preview'" class="w-full h-full object-cover" />
+        <div class="relative w-11 h-11 aspect-square rounded-lg overflow-hidden shrink-0 bg-[#18181f] border border-orange-500/40">
+          <img
+            :src="imgProxy(preview.track?.thumbnail_url || preview.track?.thumbnail)"
+            :alt="preview.track?.title || 'Preview'"
+            @error="handleImageError($event)"
+            class="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
+          />
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
@@ -1826,10 +1851,31 @@
           this.liveAnnouncement = msg;
         },
 
+        // Placeholder SVG minimalista Dark Cockpit (#18181f + disco/nota sutil naranja)
+        get fallbackCoverDataUri() {
+          return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%2318181f'/%3E%3Ccircle cx='60' cy='60' r='34' fill='none' stroke='%232c2c38' stroke-width='3'/%3E%3Ccircle cx='60' cy='60' r='22' fill='none' stroke='%23252530' stroke-width='1.5' stroke-dasharray='4 3'/%3E%3Ccircle cx='60' cy='60' r='9' fill='%23f97316' fill-opacity='0.85'/%3E%3Ccircle cx='60' cy='60' r='3' fill='%2318181f'/%3E%3C/svg%3E";
+        },
+
+        imgProxy(url) {
+          if (!url || typeof url !== 'string' || !url.trim()) {
+            return this.fallbackCoverDataUri;
+          }
+          const clean = url.trim();
+          if (clean.startsWith('data:') || clean.startsWith('/api/image-proxy')) {
+            return clean;
+          }
+          return `/api/image-proxy?url=${encodeURIComponent(clean)}`;
+        },
+
         proxyImage(url) {
-          if (!url) return 'https://placehold.co/120x120/181820/f97316?text=BM';
-          if (url.startsWith('/api/image-proxy')) return url;
-          return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+          return this.imgProxy(url);
+        },
+
+        handleImageError(event) {
+          const img = event?.target;
+          if (!img || img.dataset.fallbackApplied === '1') return;
+          img.dataset.fallbackApplied = '1';
+          img.src = this.fallbackCoverDataUri;
         },
 
         setupDialogLightDismissFallback() {
